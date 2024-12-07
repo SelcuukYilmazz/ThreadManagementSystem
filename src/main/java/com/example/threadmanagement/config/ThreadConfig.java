@@ -11,7 +11,16 @@ public class ThreadConfig {
 
     @Bean
     public ExecutorService executorService() {
-        return Executors.newCachedThreadPool();
+        return Executors.newCachedThreadPool(r -> {
+            Thread thread = new Thread(r);
+            thread.setDaemon(true);
+            return thread;
+        });
+    }
+
+    @Bean
+    public BlockingQueue<String> sharedQueue() {
+        return new LinkedBlockingQueue<>();
     }
 
     @Bean

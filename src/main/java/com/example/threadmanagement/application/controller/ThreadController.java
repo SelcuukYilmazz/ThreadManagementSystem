@@ -12,12 +12,14 @@ import com.example.threadmanagement.domain.service.ThreadManagerService;
 import com.example.threadmanagement.model.entity.ThreadEntity;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.BlockingQueue;
 
 @RestController
 @RequestMapping("/api/threads")
 @RequiredArgsConstructor
 public class ThreadController {
     private final ThreadManagerService threadManager;
+    private final BlockingQueue<String> sharedQueue;
 
     @PostMapping("/createSenderReceiverThreadsWithAmount")
     public boolean createSenderReceiverThreadsWithAmount(
@@ -52,5 +54,15 @@ public class ThreadController {
     @DeleteMapping("/deleteThreadById")
     public ResponseEntity<String> deleteThreadById(@RequestParam UUID id){
         return ResponseEntity.ok(threadManager.deleteThreadById(id).getBody());
+    }
+
+    @DeleteMapping("/deleteAllThreads")
+    public ResponseEntity<String> deleteAllThreads(){
+        return ResponseEntity.ok(threadManager.deleteAllThreads().getBody());
+    }
+
+    @GetMapping("/getQueue")
+    public ResponseEntity<BlockingQueue<String>> getQueue(){
+        return ResponseEntity.ok(sharedQueue);
     }
 }

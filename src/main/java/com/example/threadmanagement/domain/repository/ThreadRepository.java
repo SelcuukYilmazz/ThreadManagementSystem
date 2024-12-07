@@ -73,6 +73,17 @@ public class ThreadRepository{
         }
     }
 
+    public ResponseEntity<String> deleteAllThreads() {
+        try {
+            iThreadRepository.deleteAll();
+            return ResponseEntity.ok("Threads Deleted Successfully");
+        }
+        catch (Exception e)
+        {
+            return ResponseEntity.badRequest().body("Unknown Error");
+        }
+    }
+
     public ResponseEntity<String> updateThread(ThreadDto threadDto)
     {
         try

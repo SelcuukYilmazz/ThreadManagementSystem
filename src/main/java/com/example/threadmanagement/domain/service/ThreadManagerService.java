@@ -23,6 +23,8 @@ import java.util.stream.Collectors;
 public class ThreadManagerService {
     private final ExecutorService executorService;
     private final ThreadRepository threadRepository;
+    private final SenderThreadService senderThreadService;
+    private final  ReceiverThreadService receiverThreadService;
 
     public ResponseEntity<ThreadDto> createThread(ThreadDto threadDto)
     {
@@ -34,15 +36,13 @@ public class ThreadManagerService {
     {
         List<ThreadDto> threadDtoList = new ArrayList<ThreadDto>();
 
-        for (int i = 0; i< senderAmount; i++)
-        {
-            ThreadDto senderThread = new ThreadDto(UUID.randomUUID(), ThreadType.SENDER, ThreadState.RUNNING, senderAmount - i);
+        for (int i = 0; i < senderAmount; i++) {
+            ThreadDto senderThread = senderThreadService.createSenderThread(senderAmount - i);
             threadDtoList.add(senderThread);
         }
 
-        for (int i = 0; i< receiverAmount; i++)
-        {
-            ThreadDto receiverThread = new ThreadDto(UUID.randomUUID(), ThreadType.RECEIVER, ThreadState.RUNNING, receiverAmount - i);
+        for (int i = 0; i < receiverAmount; i++) {
+            ThreadDto receiverThread = receiverThreadService.createReceiverThread(receiverAmount - i);
             threadDtoList.add(receiverThread);
         }
 
@@ -67,6 +67,11 @@ public class ThreadManagerService {
     public ResponseEntity<String> deleteThreadById(UUID id)
     {
         return threadRepository.deleteThreadById(id);
+    }
+
+    public ResponseEntity<String> deleteAllThreads()
+    {
+        return threadRepository.deleteAllThreads();
     }
 
 }
