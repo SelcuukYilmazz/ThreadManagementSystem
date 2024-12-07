@@ -22,18 +22,18 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "lastFilter": {
-    "state": "OPEN",
-    "assignee": "SelcuukYilmazz"
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;SelcuukYilmazz&quot;
   }
-}]]></component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/SelcuukYilmazz/ThreadManagementSystem.git",
-    "accountId": "a8b9f5c5-5115-416d-b0a8-5079aed0576f"
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/SelcuukYilmazz/ThreadManagementSystem.git&quot;,
+    &quot;accountId&quot;: &quot;a8b9f5c5-5115-416d-b0a8-5079aed0576f&quot;
   }
-}]]></component>
+}</component>
   <component name="HighlightingSettingsPerFile">
     <setting file="jar://$PROJECT_DIR$/../../Program Files/Java/jdk-23/lib/src.zip!/java.base/java/lang/Runnable.java" root0="SKIP_INSPECTION" />
   </component>
@@ -57,6 +57,7 @@
   "keyToString": {
     "Application.DemoApplication.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
     "git-widget-placeholder": "master",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "C:/Aselsan/demo",
@@ -104,7 +105,15 @@
       <option name="project" value="LOCAL" />
       <updated>1733604523491</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="Uygulama altyapısı oluşturuldu">
+      <option name="closed" value="true" />
+      <created>1733605189127</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1733605189127</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
