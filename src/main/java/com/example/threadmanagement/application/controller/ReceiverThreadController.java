@@ -28,7 +28,7 @@ public class ReceiverThreadController {
 
     @GetMapping("/startReceiverThreadsLifeCycle")
     public ResponseEntity<Boolean> startSenderThreadsLifeCycle() {
-        return receiverThreadService.startReceiverThreadsLifeCycle();
+        return ResponseEntity.ok(receiverThreadService.startReceiverThreadsLifeCycle());
     }
 
     @GetMapping("/getActiveReceiverThreads")
@@ -47,32 +47,32 @@ public class ReceiverThreadController {
     }
 
     @PutMapping("/{threadId}/updateReceiverThread")
-    public ResponseEntity<String> updateReceiverThread(
+    public ResponseEntity<ReceiverThreadDto> updateReceiverThread(
             @ParameterObject ReceiverThreadDto threadDto) {
-        return ResponseEntity.ok(receiverThreadService.updateReceiverThread(threadDto).getBody());
+        return ResponseEntity.ok(receiverThreadService.updateReceiverThread(threadDto));
     }
 
     @PutMapping("/{threadId}/updateReceiverThreadPriority")
-    public ResponseEntity<String> updateReceiverThreadPriority(
+    public ResponseEntity<UUID> updateReceiverThreadPriority(
             @RequestParam UUID id,
             @RequestParam Integer priority) {
-        return ResponseEntity.ok(receiverThreadService.updateReceiverThreadPriority(id, priority).getBody());
+        return ResponseEntity.ok(receiverThreadService.updateReceiverThreadPriority(id, priority));
     }
 
     @PutMapping("/{threadId}/updateReceiverThreadState")
-    public ResponseEntity<String> updateReceiverThreadState(
+    public ResponseEntity<UUID> updateReceiverThreadState(
             @RequestParam UUID id,
             @RequestParam ThreadState threadState) {
-        return ResponseEntity.ok(receiverThreadService.updateReceiverThreadState(id, threadState).getBody());
+        return ResponseEntity.ok(receiverThreadService.updateReceiverThreadState(id, threadState));
     }
 
     @DeleteMapping("/deleteReceiverThreadById")
-    public ResponseEntity<String> deleteReceiverThreadById(@RequestParam UUID id){
-        return ResponseEntity.ok(receiverThreadService.deleteReceiverThreadById(id).getBody());
+    public ResponseEntity<UUID> deleteReceiverThreadById(@RequestParam UUID id){
+        return ResponseEntity.ok(receiverThreadService.deleteReceiverThreadById(id));
     }
 
     @DeleteMapping("/deleteAllReceiverThreads")
-    public ResponseEntity<String> deleteAllReceiverThreads(){
-        return ResponseEntity.ok(receiverThreadService.deleteAllReceiverThreads().getBody());
+    public ResponseEntity<Boolean> deleteAllReceiverThreads(){
+        return ResponseEntity.ok(receiverThreadService.deleteAllReceiverThreads());
     }
 }

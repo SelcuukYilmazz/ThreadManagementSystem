@@ -1,7 +1,9 @@
 package com.example.threadmanagement.exception;
 
+import java.util.UUID;
+
 public class ThreadNotFoundException extends ThreadManagementException {
-    public ThreadNotFoundException(String threadId) {
+    public ThreadNotFoundException(UUID threadId) {
         super("Thread not found with ID: " + threadId);
     }
 }

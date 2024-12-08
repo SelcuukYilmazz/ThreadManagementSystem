@@ -6,9 +6,7 @@ import com.example.threadmanagement.model.entity.ThreadState;
 import com.example.threadmanagement.model.entity.ThreadType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,7 +45,7 @@ public class SenderThreadService {
         return senderThreadDtoList;
     }
 
-    public ResponseEntity<String> updateSenderThread(SenderThreadDto senderThreadDto)
+    public SenderThreadDto updateSenderThread(SenderThreadDto senderThreadDto)
     {
         Optional<SenderThreadDto> currentSenderThread = senderThreadRepository.getSenderThreadById(senderThreadDto.getId());
         if(currentSenderThread.isEmpty())
@@ -55,7 +53,7 @@ public class SenderThreadService {
             throw new IllegalArgumentException();
         }
 
-        ResponseEntity<String> result = senderThreadRepository.updateSenderThread(senderThreadDto);
+        SenderThreadDto result = senderThreadRepository.updateSenderThread(senderThreadDto);
 
         if(senderThreadDto.getState() == ThreadState.RUNNING && currentSenderThread.get().getState() != ThreadState.RUNNING)
         {
@@ -65,7 +63,7 @@ public class SenderThreadService {
         return result;
     }
 
-    public ResponseEntity<String> updateSenderThreadState(UUID id, ThreadState threadState)
+    public UUID updateSenderThreadState(UUID id, ThreadState threadState)
     {
         Optional<SenderThreadDto> senderThreadDto = senderThreadRepository.getSenderThreadById(id);
         if(senderThreadDto.isEmpty())
@@ -73,7 +71,7 @@ public class SenderThreadService {
             throw new IllegalArgumentException();
         }
 
-        ResponseEntity<String> result = senderThreadRepository.updateSenderThreadState(id, threadState);
+        UUID result = senderThreadRepository.updateSenderThreadState(id, threadState);
 
         if(senderThreadDto.get().getState() != ThreadState.RUNNING && threadState == ThreadState.RUNNING)
         {
@@ -83,7 +81,7 @@ public class SenderThreadService {
         return result;
     }
 
-    public ResponseEntity<String> updateSenderThreadPriority(UUID id, Integer priority)
+    public UUID updateSenderThreadPriority(UUID id, Integer priority)
     {
         return senderThreadRepository.updateSenderThreadPriority(id, priority);
     }
@@ -101,24 +99,24 @@ public class SenderThreadService {
         return senderThreadRepository.getAllSenderThreads();
     }
 
-    public ResponseEntity<String> deleteSenderThreadById(UUID id)
+    public UUID deleteSenderThreadById(UUID id)
     {
         return senderThreadRepository.deleteSenderThreadById(id);
     }
 
-    public ResponseEntity<String> deleteAllSenderThreads()
+    public Boolean deleteAllSenderThreads()
     {
         return senderThreadRepository.deleteAllSenderThreads();
     }
 
-    public ResponseEntity<Boolean> startSenderThreadsLifeCycle()
+    public Boolean startSenderThreadsLifeCycle()
     {
         List<SenderThreadDto> senderThreadsList = senderThreadRepository.getActiveSenderThreads();
         for(int i = 0; i < senderThreadsList.size(); i++)
         {
             runSenderThreadLifeCycle(senderThreadsList.get(i).getId());
         }
-        return ResponseEntity.ok(true);
+        return true;
     }
 
     private void runSenderThreadLifeCycle(UUID senderThreadId) {

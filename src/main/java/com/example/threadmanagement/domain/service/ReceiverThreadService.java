@@ -2,14 +2,11 @@ package com.example.threadmanagement.domain.service;
 
 import com.example.threadmanagement.domain.repository.ReceiverThreadRepository;
 import com.example.threadmanagement.model.dto.ReceiverThreadDto;
-import com.example.threadmanagement.model.dto.SenderThreadDto;
 import com.example.threadmanagement.model.entity.ThreadState;
 import com.example.threadmanagement.model.entity.ThreadType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -48,7 +45,7 @@ public class ReceiverThreadService {
         return receiverThreadDtoList;
     }
 
-    public ResponseEntity<String> updateReceiverThread(ReceiverThreadDto receiverThreadDto)
+    public ReceiverThreadDto updateReceiverThread(ReceiverThreadDto receiverThreadDto)
     {
         Optional<ReceiverThreadDto> currentReceiverThread = receiverThreadRepository.getReceiverThreadById(receiverThreadDto.getId());
 
@@ -64,7 +61,7 @@ public class ReceiverThreadService {
         return receiverThreadRepository.updateReceiverThread(receiverThreadDto);
     }
 
-    public ResponseEntity<String> updateReceiverThreadState(UUID id, ThreadState threadState)
+    public UUID updateReceiverThreadState(UUID id, ThreadState threadState)
     {
         Optional<ReceiverThreadDto> receiverThreadDto = receiverThreadRepository.getReceiverThreadById(id);
         if(receiverThreadDto.isEmpty())
@@ -77,10 +74,10 @@ public class ReceiverThreadService {
             runReceiverThreadLifeCycle(id);
         }
 
-        return ResponseEntity.ok("Receiver Thread State Update Successful");
+        return id;
     }
 
-    public ResponseEntity<String> updateReceiverThreadPriority(UUID id, Integer priority)
+    public UUID updateReceiverThreadPriority(UUID id, Integer priority)
     {
         return receiverThreadRepository.updateReceiverThreadPriority(id, priority);
     }
@@ -97,24 +94,24 @@ public class ReceiverThreadService {
         return receiverThreadRepository.getAllReceiverThreads();
     }
 
-    public ResponseEntity<String> deleteReceiverThreadById(UUID id)
+    public UUID deleteReceiverThreadById(UUID id)
     {
         return receiverThreadRepository.deleteReceiverThreadById(id);
     }
 
-    public ResponseEntity<String> deleteAllReceiverThreads()
+    public Boolean deleteAllReceiverThreads()
     {
         return receiverThreadRepository.deleteAllReceiverThreads();
     }
 
-    public ResponseEntity<Boolean> startReceiverThreadsLifeCycle()
+    public Boolean startReceiverThreadsLifeCycle()
     {
         List<ReceiverThreadDto> receiverThreadsList = receiverThreadRepository.getActiveReceiverThreads();
         for(int i = 0; i < receiverThreadsList.size(); i++)
         {
             runReceiverThreadLifeCycle(receiverThreadsList.get(i).getId());
         }
-        return ResponseEntity.ok(true);
+        return true;
     }
 
     private void runReceiverThreadLifeCycle(UUID receiverThreadId) {

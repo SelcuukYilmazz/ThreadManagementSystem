@@ -2,15 +2,15 @@ package com.example.threadmanagement.domain.repository;
 
 
 import com.example.threadmanagement.domain.repository.interfaces.ISenderThreadRepository;
+import com.example.threadmanagement.exception.ThreadManagementException;
+import com.example.threadmanagement.exception.ThreadNotFoundException;
 import com.example.threadmanagement.model.dto.SenderThreadDto;
 import com.example.threadmanagement.model.entity.SenderThreadEntity;
 import com.example.threadmanagement.model.entity.ThreadState;
 import com.example.threadmanagement.model.mapper.interfaces.ISenderThreadMapper;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Repository;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -23,19 +23,7 @@ public class SenderThreadRepository{
     private final ISenderThreadRepository iSenderThreadRepository;
     private final ISenderThreadMapper iThreadMapper;
 
-    public ResponseEntity<SenderThreadDto> createSenderThread(SenderThreadDto senderThreadDto){
-        try {
-            SenderThreadEntity senderThreadEntity = iThreadMapper.toEntity(senderThreadDto);
-            iSenderThreadRepository.save(senderThreadEntity);
-            return ResponseEntity.ok(senderThreadDto);
-        }
-        catch (IllegalArgumentException e)
-        {
-            return ResponseEntity.badRequest().body(senderThreadDto);
-        }
-    }
-
-    public boolean createSenderThreadsWithList(List<SenderThreadDto> senderThreadDtoList)
+    public Boolean createSenderThreadsWithList(List<SenderThreadDto> senderThreadDtoList)
     {
         try {
             List<SenderThreadEntity> senderThreadEntityList = iThreadMapper.toEntityList(senderThreadDtoList);
@@ -44,7 +32,7 @@ public class SenderThreadRepository{
         }
         catch (Exception e)
         {
-            throw e;
+            throw new ThreadManagementException(e.getMessage(),e.getCause());
         }
     }
 
@@ -60,7 +48,7 @@ public class SenderThreadRepository{
         }
         catch (Exception e)
         {
-            throw e;
+            throw new ThreadManagementException(e.getMessage(),e.getCause());
         }
     }
 
@@ -73,7 +61,7 @@ public class SenderThreadRepository{
         }
         catch (Exception e)
         {
-            throw e;
+            throw new ThreadManagementException(e.getMessage(),e.getCause());
         }
     }
 
@@ -86,33 +74,33 @@ public class SenderThreadRepository{
         }
         catch (Exception e)
         {
-            throw e;
+            throw new ThreadManagementException(e.getMessage(),e.getCause());
         }
     }
 
-    public ResponseEntity<String> deleteSenderThreadById(UUID id) {
+    public UUID deleteSenderThreadById(UUID id) {
         try {
             iSenderThreadRepository.deleteById(id);
-            return ResponseEntity.ok("Sender Thread Deleted Successfully : " + id);
-        }
-        catch (IllegalArgumentException e)
-        {
-            return ResponseEntity.badRequest().body("Sender Thread Not Found : " + id);
-        }
-    }
-
-    public ResponseEntity<String> deleteAllSenderThreads() {
-        try {
-            iSenderThreadRepository.deleteAll();
-            return ResponseEntity.ok("Sender Threads Deleted Successfully");
+            return id;
         }
         catch (Exception e)
         {
-            return ResponseEntity.badRequest().body("Unknown Error");
+            throw new ThreadNotFoundException(id);
         }
     }
 
-    public ResponseEntity<String> updateSenderThread(SenderThreadDto senderThreadDto)
+    public Boolean deleteAllSenderThreads() {
+        try {
+            iSenderThreadRepository.deleteAll();
+            return true;
+        }
+        catch (Exception e)
+        {
+            throw new ThreadManagementException(e.getMessage(),e.getCause());
+        }
+    }
+
+    public SenderThreadDto updateSenderThread(SenderThreadDto senderThreadDto)
     {
         try
         {
@@ -132,19 +120,19 @@ public class SenderThreadRepository{
                 senderThreadEntity.setType(senderThreadDto.getType());
             }
             iSenderThreadRepository.save(senderThreadEntity);
-            return ResponseEntity.ok("Thread Updated Successfully = " + senderThreadDto.getId());
+            return senderThreadDto;
         }
         catch (EntityNotFoundException e)
         {
-            return ResponseEntity.badRequest().body("Thread Not Found");
+            throw new ThreadNotFoundException(senderThreadDto.getId());
         }
         catch (Exception e)
         {
-            throw e;
+            throw new ThreadManagementException(e.getMessage(),e.getCause());
         }
     }
 
-    public ResponseEntity<String> updateSenderThreadPriority(UUID id, Integer priority)
+    public UUID updateSenderThreadPriority(UUID id, Integer priority)
     {
         try
         {
@@ -159,19 +147,19 @@ public class SenderThreadRepository{
                 threadEntity.setPriority(priority);
             }
             iSenderThreadRepository.save(threadEntity);
-            return ResponseEntity.ok("Thread Updated Successfully = " + id);
+            return id;
         }
         catch (IllegalArgumentException e)
         {
-            return ResponseEntity.badRequest().body("Priority Can't Be Null");
+            throw new ThreadManagementException("Priority Can't Be Null",e.getCause());
         }
         catch (EntityNotFoundException e)
         {
-            return ResponseEntity.badRequest().body("Entity Not Found");
+            throw new ThreadNotFoundException(id);
         }
     }
 
-    public ResponseEntity<String> updateSenderThreadState(UUID id, ThreadState threadState)
+    public UUID updateSenderThreadState(UUID id, ThreadState threadState)
     {
         try
         {
@@ -186,15 +174,15 @@ public class SenderThreadRepository{
                 senderThreadEntity.setState(threadState);
             }
             iSenderThreadRepository.save(senderThreadEntity);
-            return ResponseEntity.ok("Sender Thread Updated Successfully = " + id);
+            return id;
         }
         catch (IllegalArgumentException e)
         {
-            return ResponseEntity.badRequest().body("Sender Thread State Can't Be Null");
+            throw new ThreadManagementException("Thread State Can't Be Null",e.getCause());
         }
         catch (EntityNotFoundException e)
         {
-            return ResponseEntity.badRequest().body("Sender Thread Not Found");
+            throw new ThreadNotFoundException(id);
         }
     }
 }
