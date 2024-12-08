@@ -24,18 +24,6 @@ public class SenderThreadService {
     private final SenderThreadRepository senderThreadRepository;
     private final Map<UUID, Future<?>> runningSenders = new ConcurrentHashMap<>();
 
-    public ResponseEntity<SenderThreadDto> createSenderThread(SenderThreadDto senderThreadDto)
-    {
-        senderThreadDto.setId(UUID.randomUUID());
-        return senderThreadRepository.createSenderThread(senderThreadDto);
-    }
-
-    public Optional<SenderThreadDto> getSenderThreadById(UUID id)
-    {
-        Optional<SenderThreadDto> senderThreadDto = senderThreadRepository.getSenderThreadById(id);
-        return senderThreadDto;
-    }
-
     public List<SenderThreadDto> createSenderThreadsWithAmount(Integer amount) {
         List<SenderThreadDto> senderThreadDtoList = new ArrayList<SenderThreadDto>();
 
@@ -123,27 +111,41 @@ public class SenderThreadService {
         return senderThreadRepository.deleteAllSenderThreads();
     }
 
-    private void runSenderThreadLifeCycle(UUID senderThreadId)
+    public ResponseEntity<Boolean> startSenderThreadsLifeCycle()
     {
+        List<SenderThreadDto> senderThreadsList = senderThreadRepository.getActiveSenderThreads();
+        for(int i = 0; i < senderThreadsList.size(); i++)
+        {
+            runSenderThreadLifeCycle(senderThreadsList.get(i).getId());
+        }
+        return ResponseEntity.ok(true);
+    }
+
+    private void runSenderThreadLifeCycle(UUID senderThreadId) {
         Future<?> senderTask = executorService.submit(() -> {
+            long lastProcessTime = System.currentTimeMillis();
             while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    String data = "Data from sender " + senderThreadId + " at " + System.currentTimeMillis();
-                    sharedQueue.put(data);
-                    log.info("Sender {} added: {}", senderThreadId, data);
-                    Thread.sleep(1000); // 1 second frequency
+                    long currentTime = System.currentTimeMillis();
+                    if (currentTime - lastProcessTime >= 1000) {  // Check if 1 second has passed
+                        String timestamp = new java.text.SimpleDateFormat("HH:mm:ss").format(new Date());
+                        String data = "Data from sender " + senderThreadId + " at " + timestamp;
+                        sharedQueue.put(data);
+                        log.info("Sender {} added: {}", senderThreadId, data);
+                        lastProcessTime = currentTime;
+                    }
 
                     Optional<SenderThreadDto> thisThread = senderThreadRepository.getSenderThreadById(senderThreadId);
-                    if (thisThread.isEmpty() || thisThread.get().getState() == ThreadState.STOPPED)
-                    {
+                    if (thisThread.isEmpty() || thisThread.get().getState() == ThreadState.STOPPED) {
                         Future<?> task = runningSenders.get(senderThreadId);
                         task.cancel(true);
                         runningSenders.remove(senderThreadId);
-                    }
-                    else
-                    {
+                        break;
+                    } else {
                         Thread.currentThread().setPriority(thisThread.get().getPriority());
                     }
+
+                    Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     log.info("Sender {} interrupted", senderThreadId);

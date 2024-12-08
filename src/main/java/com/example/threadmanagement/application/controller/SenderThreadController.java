@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/senderThread")
+@RequestMapping("/senderThreads")
 @RequiredArgsConstructor
 public class SenderThreadController {
     private final SenderThreadService senderThreadService;
@@ -23,6 +23,11 @@ public class SenderThreadController {
     )
     {
         return senderThreadService.createSenderThreadsWithAmount(senderAmount);
+    }
+
+    @GetMapping("/startSenderThreadsLifeCycle")
+    public ResponseEntity<Boolean> startSenderThreadsLifeCycle() {
+        return senderThreadService.startSenderThreadsLifeCycle();
     }
 
     @GetMapping("/getActiveSenderThreads")

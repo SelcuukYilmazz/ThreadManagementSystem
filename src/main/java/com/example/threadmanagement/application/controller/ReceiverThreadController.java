@@ -2,6 +2,7 @@ package com.example.threadmanagement.application.controller;
 
 import com.example.threadmanagement.domain.service.ReceiverThreadService;
 import com.example.threadmanagement.model.dto.ReceiverThreadDto;
+import com.example.threadmanagement.model.dto.SenderThreadDto;
 import com.example.threadmanagement.model.entity.ThreadState;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
@@ -12,7 +13,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/receiverThread")
+@RequestMapping("/receiverThreads")
 @RequiredArgsConstructor
 public class ReceiverThreadController {
     private final ReceiverThreadService receiverThreadService;
@@ -23,6 +24,11 @@ public class ReceiverThreadController {
     )
     {
         return receiverThreadService.createReceiverThreadsWithAmount(receiverAmount);
+    }
+
+    @GetMapping("/startReceiverThreadsLifeCycle")
+    public ResponseEntity<Boolean> startSenderThreadsLifeCycle() {
+        return receiverThreadService.startReceiverThreadsLifeCycle();
     }
 
     @GetMapping("/getActiveReceiverThreads")

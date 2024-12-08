@@ -2,6 +2,7 @@ package com.example.threadmanagement.domain.service;
 
 import com.example.threadmanagement.domain.repository.ReceiverThreadRepository;
 import com.example.threadmanagement.model.dto.ReceiverThreadDto;
+import com.example.threadmanagement.model.dto.SenderThreadDto;
 import com.example.threadmanagement.model.entity.ThreadState;
 import com.example.threadmanagement.model.entity.ThreadType;
 import lombok.RequiredArgsConstructor;
@@ -23,18 +24,6 @@ public class ReceiverThreadService {
     private final ExecutorService executorService;
     private final ReceiverThreadRepository receiverThreadRepository;
     private final Map<UUID, Future<?>> runningReceivers = new ConcurrentHashMap<>();
-
-    public ResponseEntity<ReceiverThreadDto> createReceiverThread(ReceiverThreadDto receiverThreadDto)
-    {
-        receiverThreadDto.setId(UUID.randomUUID());
-        return receiverThreadRepository.createReceiverThread(receiverThreadDto);
-    }
-
-    public Optional<ReceiverThreadDto> getReceiverThreadById(UUID id)
-    {
-        Optional<ReceiverThreadDto> receiverThreadDto = receiverThreadRepository.getReceiverThreadById(id);
-        return receiverThreadDto;
-    }
 
     public List<ReceiverThreadDto> createReceiverThreadsWithAmount(Integer amount) {
         List<ReceiverThreadDto> receiverThreadDtoList = new ArrayList<ReceiverThreadDto>();
@@ -118,22 +107,39 @@ public class ReceiverThreadService {
         return receiverThreadRepository.deleteAllReceiverThreads();
     }
 
-    private void runReceiverThreadLifeCycle(UUID receiverThreadId)
+    public ResponseEntity<Boolean> startReceiverThreadsLifeCycle()
     {
+        List<ReceiverThreadDto> receiverThreadsList = receiverThreadRepository.getActiveReceiverThreads();
+        for(int i = 0; i < receiverThreadsList.size(); i++)
+        {
+            runReceiverThreadLifeCycle(receiverThreadsList.get(i).getId());
+        }
+        return ResponseEntity.ok(true);
+    }
+
+    private void runReceiverThreadLifeCycle(UUID receiverThreadId) {
         Future<?> receiverTask = executorService.submit(() -> {
+            long lastProcessTime = System.currentTimeMillis();
             while (!Thread.currentThread().isInterrupted()) {
                 Optional<ReceiverThreadDto> thisThread = receiverThreadRepository.getReceiverThreadById(receiverThreadId);
-                if (thisThread.isEmpty() || thisThread.get().getState() == ThreadState.STOPPED)
-                {
+                if (thisThread.isEmpty() || thisThread.get().getState() == ThreadState.STOPPED) {
                     Future<?> task = runningReceivers.get(receiverThreadId);
                     task.cancel(true);
                     runningReceivers.remove(receiverThreadId);
+                    break;
                 }
                 Thread.currentThread().setPriority(thisThread.get().getPriority());
                 try {
-                    String data = sharedQueue.take();
-                    log.info("Receiver {} consumed: {}", receiverThreadId, data);
-                    Thread.sleep(1000); // 1 second frequency
+                    long currentTime = System.currentTimeMillis();
+                    if (currentTime - lastProcessTime >= 1000) {
+                        String data = sharedQueue.poll();
+                        if (data != null) {
+                            String timestamp = new java.text.SimpleDateFormat("HH:mm:ss").format(new Date());
+                            log.info("Receiver {} consumed: {} at {}", receiverThreadId, data, timestamp);
+                            lastProcessTime = currentTime;
+                        }
+                    }
+                    Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     log.info("Receiver {} interrupted", receiverThreadId);
@@ -141,7 +147,6 @@ public class ReceiverThreadService {
                 }
             }
         });
-
         runningReceivers.put(receiverThreadId, receiverTask);
     }
 }
