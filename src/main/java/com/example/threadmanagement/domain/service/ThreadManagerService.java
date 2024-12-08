@@ -37,12 +37,12 @@ public class ThreadManagerService {
         List<ThreadDto> threadDtoList = new ArrayList<ThreadDto>();
 
         for (int i = 0; i < senderAmount; i++) {
-            ThreadDto senderThread = senderThreadService.createSenderThread(senderAmount - i);
+            ThreadDto senderThread = senderThreadService.createSenderThread(i + 1);
             threadDtoList.add(senderThread);
         }
 
         for (int i = 0; i < receiverAmount; i++) {
-            ThreadDto receiverThread = receiverThreadService.createReceiverThread(receiverAmount - i);
+            ThreadDto receiverThread = receiverThreadService.createReceiverThread(senderAmount + i + 1);
             threadDtoList.add(receiverThread);
         }
 
@@ -56,7 +56,39 @@ public class ThreadManagerService {
 
     public ResponseEntity<String> updateThread(ThreadDto threadDto)
     {
+        ThreadDto currentThread = threadRepository.getThreadById(threadDto.getId());
+
+        if(threadDto.getType() == ThreadType.SENDER)
+        {
+            ThreadDto senderThread = senderThreadService.createSenderThread(0);
+        }
+        else if(threadDto.getType() == ThreadType.RECEIVER)
+        {
+            ThreadDto senderThread = receiverThreadService.createReceiverThread(0);
+        }
         return threadRepository.updateThread(threadDto);
+    }
+
+    public ResponseEntity<String> updateThreadPriority(UUID id, Integer priority)
+    {
+        return threadRepository.updateThreadPriority(id, priority);
+    }
+
+    public ResponseEntity<String> updateThreadState(UUID id, ThreadState threadState)
+    {
+        ThreadDto threadDto = threadRepository.getThreadById(id);
+
+        threadRepository.updateThreadState(id, threadState);
+
+        if(threadDto.getType() == ThreadType.SENDER)
+        {
+            ThreadDto senderThread = senderThreadService.createSenderThread(0);
+        }
+        else if(threadDto.getType() == ThreadType.RECEIVER)
+        {
+            ThreadDto senderThread = receiverThreadService.createReceiverThread(0);
+        }
+        return ResponseEntity.ok("Thread State Update Successful");
     }
 
     public List<ThreadDto> getAllThreadsInfo()

@@ -1,5 +1,7 @@
 package com.example.threadmanagement.application.controller;
 
+import com.example.threadmanagement.domain.service.ReceiverThreadService;
+import com.example.threadmanagement.domain.service.SenderThreadService;
 import com.example.threadmanagement.model.dto.ThreadDto;
 import com.example.threadmanagement.model.entity.ThreadState;
 import com.example.threadmanagement.model.entity.ThreadType;
@@ -20,6 +22,8 @@ import java.util.concurrent.BlockingQueue;
 public class ThreadController {
     private final ThreadManagerService threadManager;
     private final BlockingQueue<String> sharedQueue;
+    private final SenderThreadService senderThreadService;
+    private final ReceiverThreadService receiverThreadService;
 
     @PostMapping("/createSenderReceiverThreadsWithAmount")
     public boolean createSenderReceiverThreadsWithAmount(
@@ -40,10 +44,55 @@ public class ThreadController {
         return ResponseEntity.ok(threadManager.getThreadById(id));
     }
 
+
+    @GetMapping("/getActiveSenderThreads")
+    public ResponseEntity<List<ThreadDto>> getActiveSenderThreads() {
+        return ResponseEntity.ok(senderThreadService.getActiveSenderThreads());
+    }
+
+    @GetMapping("/getAllSenderThreads")
+    public ResponseEntity<List<ThreadDto>> getAllSenderThreads() {
+        return ResponseEntity.ok(senderThreadService.getAllSenderThreads());
+    }
+
+    @GetMapping("/getPassiveSenderThreads")
+    public ResponseEntity<List<ThreadDto>> getPassiveSenderThreads() {
+        return ResponseEntity.ok(senderThreadService.getPassiveSenderThreads());
+    }
+
+    @GetMapping("/getActiveReceiverThreads")
+    public ResponseEntity<List<ThreadDto>> getActiveReceiverThreads() {
+        return ResponseEntity.ok(receiverThreadService.getActiveReceiverThreads());
+    }
+
+    @GetMapping("/getAllReceiverThreads")
+    public ResponseEntity<List<ThreadDto>> getAllReceiverThreads() {
+        return ResponseEntity.ok(receiverThreadService.getAllReceiverThreads());
+    }
+
+    @GetMapping("/getPassiveReceiverThreads")
+    public ResponseEntity<List<ThreadDto>> getPassiveReceiverThreads() {
+        return ResponseEntity.ok(receiverThreadService.getPassiveReceiverThreads());
+    }
+
     @PutMapping("/{threadId}/updateThread")
     public ResponseEntity<String> updateThread(
             @ParameterObject ThreadDto threadDto) {
         return ResponseEntity.ok(threadManager.updateThread(threadDto).getBody());
+    }
+
+    @PutMapping("/{threadId}/updateThreadPriority")
+    public ResponseEntity<String> updateThreadPriority(
+            @RequestParam UUID id,
+            @RequestParam Integer priority) {
+        return ResponseEntity.ok(threadManager.updateThreadPriority(id, priority).getBody());
+    }
+
+    @PutMapping("/{threadId}/updateThreadState")
+    public ResponseEntity<String> updateThreadPriority(
+            @RequestParam UUID id,
+            @RequestParam ThreadState threadState) {
+        return ResponseEntity.ok(threadManager.updateThreadState(id, threadState).getBody());
     }
 
     @GetMapping("/getAllThreads")

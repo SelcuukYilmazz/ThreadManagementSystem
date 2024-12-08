@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -32,6 +33,14 @@ public class ReceiverThreadService {
 
         Future<?> receiverTask = executorService.submit(() -> {
             while (!Thread.currentThread().isInterrupted()) {
+                Optional<ThreadDto> thisThread = threadRepository.isThreadAlive(receiverThread.getId());
+                if (thisThread.isEmpty() || thisThread.get().getState() == ThreadState.STOPPED)
+                {
+                    Future<?> task = runningReceivers.get(threadId);
+                    task.cancel(true);
+                    runningReceivers.remove(threadId);
+                }
+                Thread.currentThread().setPriority(thisThread.get().getPriority());
                 try {
                     String data = sharedQueue.take();
                     log.info("Receiver {} consumed: {}", threadId, data);
@@ -49,28 +58,15 @@ public class ReceiverThreadService {
         return receiverThread;
     }
 
-    public void updateThreadState(UUID threadId, ThreadState newState) {
-        Future<?> task = runningReceivers.get(threadId);
-        if (task != null) {
-            if (newState == ThreadState.STOPPED) {
-                task.cancel(true);
-                runningReceivers.remove(threadId);
-            }
-            ThreadDto threadDto = threadRepository.getThreadById(threadId);
-            threadDto.setState(newState);
-            threadRepository.updateThread(threadDto);
-        }
-    }
-
-    public void updateThreadPriority(UUID threadId, int priority) {
-        ThreadDto threadDto = threadRepository.getThreadById(threadId);
-        threadDto.setPriority(priority);
-        threadRepository.updateThread(threadDto);
-    }
-
     public List<ThreadDto> getActiveReceiverThreads() {
-        return threadRepository.getAllThreads().getBody().stream()
-                .filter(thread -> thread.getType() == ThreadType.RECEIVER)
-                .collect(Collectors.toList());
+        return threadRepository.getActiveReceiverThreads();
+    }
+
+    public List<ThreadDto> getPassiveReceiverThreads() {
+        return threadRepository.getPassiveReceiverThreads();
+    }
+
+    public List<ThreadDto> getAllReceiverThreads() {
+        return threadRepository.getAllReceiverThreads();
     }
 }
