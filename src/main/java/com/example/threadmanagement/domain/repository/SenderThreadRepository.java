@@ -23,6 +23,11 @@ public class SenderThreadRepository{
     private final ISenderThreadRepository iSenderThreadRepository;
     private final ISenderThreadMapper iThreadMapper;
 
+    /**
+     * Creates multiple sender threads based on the provided amount.
+     * @param senderThreadDtoList list of sender threads to be created in database
+     * @return if function is success then returns true else throws exception
+     */
     public Boolean createSenderThreadsWithList(List<SenderThreadDto> senderThreadDtoList)
     {
         try {
@@ -36,11 +41,31 @@ public class SenderThreadRepository{
         }
     }
 
+    /**
+     * Gets sender thread from database with id value
+     * @param id id of sender thread
+     * @return returns sender thread if found else it returns empty() for Optional if Id null returns
+     * IllegalArgumentException and else it throws ThreadManagementException
+     */
     public Optional<SenderThreadDto> getSenderThreadById(UUID id) {
-        return iSenderThreadRepository.findById(id)
-                .map(iThreadMapper::toDto);
+        try {
+            return iSenderThreadRepository.findById(id)
+                    .map(iThreadMapper::toDto);
+        }
+        catch (IllegalArgumentException e)
+        {
+            throw new ThreadManagementException("Id Can't Be Null",e.getCause());
+        }
+        catch (Exception e)
+        {
+            throw new ThreadManagementException(e.getMessage(),e.getCause());
+        }
     }
 
+    /**
+     * Gets all sender threads from database
+     * @return returns list of sender threads that it found from database else it throws ThreadManagementException
+     */
     public List<SenderThreadDto> getAllSenderThreads() {
         try{
             List<SenderThreadEntity> entities = iSenderThreadRepository.findAll();
@@ -52,6 +77,10 @@ public class SenderThreadRepository{
         }
     }
 
+    /**
+     * Gets all active sender threads which thread states are running
+     * @return returns list of active sender threads and in exception throws ThreadManagementException
+     */
     public List<SenderThreadDto> getActiveSenderThreads() {
         try{
             List<SenderThreadEntity> senderThreadEntities = iSenderThreadRepository.findAll();
@@ -65,6 +94,10 @@ public class SenderThreadRepository{
         }
     }
 
+    /**
+     * Gets all passive sender threads which thread states are stopped
+     * @return returns list of passive sender threads and in exception throws ThreadManagementException
+     */
     public List<SenderThreadDto> getPassiveSenderThreads() {
         try{
             List<SenderThreadEntity> entities = iSenderThreadRepository.findAll();
@@ -78,6 +111,12 @@ public class SenderThreadRepository{
         }
     }
 
+    /**
+     * Deletes sender thread with its id
+     * @param id id of sender thread
+     * @return returns id of deleted sender thread and if thread not found throws ThreadNotFoundException
+     * For other exceptions throws ThreadManagementException
+     */
     public UUID deleteSenderThreadById(UUID id) {
         try {
             iSenderThreadRepository.deleteById(id);
@@ -89,6 +128,11 @@ public class SenderThreadRepository{
         }
     }
 
+    /**
+     * Deletes all sender threads from database
+     * @return true if deletion of all sender threads are true
+     * Throws ThreadManagementException in exception
+     */
     public Boolean deleteAllSenderThreads() {
         try {
             iSenderThreadRepository.deleteAll();
@@ -100,6 +144,12 @@ public class SenderThreadRepository{
         }
     }
 
+    /**
+     * Updates sender thread from database with senderthreaddto
+     * @param senderThreadDto DTO value of senderThread entity
+     * @return returns senderThreadDto which is update dto in successful state if thread not found in database
+     * Throws ThreadNotFoundException for other exceptions throws ThreadManagementException
+     */
     public SenderThreadDto updateSenderThread(SenderThreadDto senderThreadDto)
     {
         try
@@ -132,6 +182,12 @@ public class SenderThreadRepository{
         }
     }
 
+    /**
+     * Updates sender thread priority number with id and priority value
+     * @param id id of sender thread
+     * @param priority priority value of user selection
+     * @return returns id of updated sender thread
+     */
     public UUID updateSenderThreadPriority(UUID id, Integer priority)
     {
         try
@@ -159,6 +215,12 @@ public class SenderThreadRepository{
         }
     }
 
+    /**
+     * Updates sender thread state value with id value and threadState value
+     * @param id id of sender thread
+     * @param threadState thread state value for update
+     * @return returns updated sender thread id value
+     */
     public UUID updateSenderThreadState(UUID id, ThreadState threadState)
     {
         try
