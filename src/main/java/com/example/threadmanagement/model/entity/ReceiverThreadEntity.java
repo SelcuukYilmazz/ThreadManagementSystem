@@ -9,10 +9,10 @@ import java.util.UUID;
 
 @Data
 @Entity
-@Table(name = "thrd.Threads")
+@Table(name = "thrd.ReceiverThreads")
 @NoArgsConstructor
 @AllArgsConstructor
-public class ThreadEntity {
+public class ReceiverThreadEntity {
     @Id
     private UUID id;
 
@@ -27,7 +27,7 @@ public class ThreadEntity {
     @Column(name = "priority", nullable = false)
     private Integer priority;
 
-    public ThreadEntity(ThreadType type, ThreadState state, Integer priority)
+    public ReceiverThreadEntity(ThreadType type, ThreadState state, Integer priority)
     {
         this.type = type;
         this.state = state;

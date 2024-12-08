@@ -1,22 +1,19 @@
 package com.example.threadmanagement.domain.service;
 
-import com.example.threadmanagement.domain.repository.ThreadRepository;
-import com.example.threadmanagement.model.dto.ThreadDto;
+import com.example.threadmanagement.domain.repository.SenderThreadRepository;
+import com.example.threadmanagement.model.dto.SenderThreadDto;
 import com.example.threadmanagement.model.entity.ThreadState;
 import com.example.threadmanagement.model.entity.ThreadType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -24,51 +21,138 @@ import java.util.stream.Collectors;
 public class SenderThreadService {
     private final BlockingQueue<String> sharedQueue;
     private final ExecutorService executorService;
-    private final ThreadRepository threadRepository;
+    private final SenderThreadRepository senderThreadRepository;
     private final Map<UUID, Future<?>> runningSenders = new ConcurrentHashMap<>();
 
-    public ThreadDto createSenderThread(int priority) {
-        UUID threadId = UUID.randomUUID();
-        ThreadDto senderThread = new ThreadDto(threadId, ThreadType.SENDER, ThreadState.RUNNING, priority);
+    public ResponseEntity<SenderThreadDto> createSenderThread(SenderThreadDto senderThreadDto)
+    {
+        senderThreadDto.setId(UUID.randomUUID());
+        return senderThreadRepository.createSenderThread(senderThreadDto);
+    }
 
+    public Optional<SenderThreadDto> getSenderThreadById(UUID id)
+    {
+        Optional<SenderThreadDto> senderThreadDto = senderThreadRepository.getSenderThreadById(id);
+        return senderThreadDto;
+    }
+
+    public List<SenderThreadDto> createSenderThreadsWithAmount(Integer amount) {
+        List<SenderThreadDto> senderThreadDtoList = new ArrayList<SenderThreadDto>();
+
+        if(amount == null)
+        {
+            throw new IllegalArgumentException();
+        }
+
+        for (int i = 0; i < amount; i++) {
+            UUID threadId = UUID.randomUUID();
+            senderThreadDtoList.add(new SenderThreadDto(threadId, ThreadType.SENDER, ThreadState.RUNNING, Thread.NORM_PRIORITY));
+        }
+
+        senderThreadRepository.createSenderThreadsWithList(senderThreadDtoList);
+
+        for(int i = 0; i < senderThreadDtoList.size(); i++)
+        {
+            UUID threadId = senderThreadDtoList.get(i).getId();
+            runSenderThreadLifeCycle(threadId);
+        }
+        return senderThreadDtoList;
+    }
+
+    public ResponseEntity<String> updateSenderThread(SenderThreadDto senderThreadDto)
+    {
+        Optional<SenderThreadDto> currentSenderThread = senderThreadRepository.getSenderThreadById(senderThreadDto.getId());
+        if(currentSenderThread.isEmpty())
+        {
+            throw new IllegalArgumentException();
+        }
+
+        ResponseEntity<String> result = senderThreadRepository.updateSenderThread(senderThreadDto);
+
+        if(senderThreadDto.getState() == ThreadState.RUNNING && currentSenderThread.get().getState() != ThreadState.RUNNING)
+        {
+            runSenderThreadLifeCycle(senderThreadDto.getId());
+        }
+
+        return result;
+    }
+
+    public ResponseEntity<String> updateSenderThreadState(UUID id, ThreadState threadState)
+    {
+        Optional<SenderThreadDto> senderThreadDto = senderThreadRepository.getSenderThreadById(id);
+        if(senderThreadDto.isEmpty())
+        {
+            throw new IllegalArgumentException();
+        }
+
+        ResponseEntity<String> result = senderThreadRepository.updateSenderThreadState(id, threadState);
+
+        if(senderThreadDto.get().getState() != ThreadState.RUNNING && threadState == ThreadState.RUNNING)
+        {
+            runSenderThreadLifeCycle(id);
+        }
+
+        return result;
+    }
+
+    public ResponseEntity<String> updateSenderThreadPriority(UUID id, Integer priority)
+    {
+        return senderThreadRepository.updateSenderThreadPriority(id, priority);
+    }
+
+    public List<SenderThreadDto> getActiveSenderThreads()
+    {
+        return senderThreadRepository.getActiveSenderThreads();
+    }
+
+    public List<SenderThreadDto> getPassiveSenderThreads() {
+        return senderThreadRepository.getPassiveSenderThreads();
+    }
+
+    public List<SenderThreadDto> getAllSenderThreads() {
+        return senderThreadRepository.getAllSenderThreads();
+    }
+
+    public ResponseEntity<String> deleteSenderThreadById(UUID id)
+    {
+        return senderThreadRepository.deleteSenderThreadById(id);
+    }
+
+    public ResponseEntity<String> deleteAllSenderThreads()
+    {
+        return senderThreadRepository.deleteAllSenderThreads();
+    }
+
+    private void runSenderThreadLifeCycle(UUID senderThreadId)
+    {
         Future<?> senderTask = executorService.submit(() -> {
             while (!Thread.currentThread().isInterrupted()) {
-                Optional<ThreadDto> thisThread = threadRepository.isThreadAlive(senderThread.getId());
-                if (thisThread.isEmpty() || thisThread.get().getState() == ThreadState.STOPPED)
-                {
-                    Future<?> task = runningSenders.get(threadId);
-                    task.cancel(true);
-                    runningSenders.remove(threadId);
-                }
-                Thread.currentThread().setPriority(thisThread.get().getPriority());
                 try {
-                    String data = "Data from sender " + threadId + " at " + System.currentTimeMillis();
+                    String data = "Data from sender " + senderThreadId + " at " + System.currentTimeMillis();
                     sharedQueue.put(data);
-                    log.info("Sender {} added: {}", threadId, data);
+                    log.info("Sender {} added: {}", senderThreadId, data);
                     Thread.sleep(1000); // 1 second frequency
+
+                    Optional<SenderThreadDto> thisThread = senderThreadRepository.getSenderThreadById(senderThreadId);
+                    if (thisThread.isEmpty() || thisThread.get().getState() == ThreadState.STOPPED)
+                    {
+                        Future<?> task = runningSenders.get(senderThreadId);
+                        task.cancel(true);
+                        runningSenders.remove(senderThreadId);
+                    }
+                    else
+                    {
+                        Thread.currentThread().setPriority(thisThread.get().getPriority());
+                    }
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
-                    log.info("Sender {} interrupted", threadId);
+                    log.info("Sender {} interrupted", senderThreadId);
                     break;
                 }
             }
         });
 
-        runningSenders.put(threadId, senderTask);
-        threadRepository.createThread(senderThread);
-        return senderThread;
+        runningSenders.put(senderThreadId, senderTask);
     }
 
-    public List<ThreadDto> getActiveSenderThreads()
-    {
-        return threadRepository.getActiveSenderThreads();
-    }
-
-    public List<ThreadDto> getPassiveSenderThreads() {
-        return threadRepository.getPassiveSenderThreads();
-    }
-
-    public List<ThreadDto> getAllSenderThreads() {
-        return threadRepository.getAllSenderThreads();
-    }
 }

@@ -10,7 +10,7 @@ import java.util.UUID;
 
 @Data
 @AllArgsConstructor
-public class ThreadDto {
+public class SenderThreadDto {
     private UUID id;
     private ThreadType type;
     private ThreadState state;
