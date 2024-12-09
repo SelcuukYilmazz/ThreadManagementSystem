@@ -22,9 +22,10 @@ public class ReceiverThreadRepository {
     private final IReceiverThreadMapper iReceiverThreadMapper;
 
     /**
-     * Creates multiple receiver threads based on the provided amount.
+     * Creates multiple receiver threads in the database.
      * @param receiverThreadDtoList list of receiver threads to be created in database
-     * @return if function is success then returns true else throws exception
+     * @return true if threads were successfully created
+     * @throws ThreadManagementException if any error occurs during creation
      */
     public Boolean createReceiverThreadsWithList(List<ReceiverThreadDto> receiverThreadDtoList)
     {
@@ -40,10 +41,10 @@ public class ReceiverThreadRepository {
     }
 
     /**
-     * Gets receiver thread from database with id value
-     * @param id id of receiver thread
-     * @return returns receiver thread if found else it returns empty() for Optional if Id null returns
-     * IllegalArgumentException and else it throws ThreadManagementException
+     * Retrieves a receiver thread by its ID.
+     * @param id ID of the receiver thread to retrieve
+     * @return Optional containing the receiver thread if found, empty otherwise
+     * @throws ThreadManagementException if ID is null or other errors occur
      */
     public Optional<ReceiverThreadDto> getReceiverThreadById(UUID id) {
         try{
@@ -61,8 +62,9 @@ public class ReceiverThreadRepository {
     }
 
     /**
-     * Gets all receiver threads from database
-     * @return returns list of receiver threads that it found from database else it throws ThreadManagementException
+     * Retrieves all receiver threads from the database.
+     * @return list of all receiver threads
+     * @throws ThreadManagementException if any error occurs during retrieval
      */
     public List<ReceiverThreadDto>getAllReceiverThreads() {
         try{
@@ -76,8 +78,9 @@ public class ReceiverThreadRepository {
     }
 
     /**
-     * Gets all active receiver threads which thread states are running
-     * @return returns list of active receiver threads and in exception throws ThreadManagementException
+     * Retrieves all active receiver threads (state = RUNNING).
+     * @return list of active receiver threads
+     * @throws ThreadManagementException if any error occurs during retrieval
      */
     public List<ReceiverThreadDto> getActiveReceiverThreads() {
         try{
@@ -93,8 +96,9 @@ public class ReceiverThreadRepository {
     }
 
     /**
-     * Gets all passive receiver threads which thread states are stopped
-     * @return returns list of passive receiver threads and in exception throws ThreadManagementException
+     * Retrieves all passive receiver threads (state = STOPPED).
+     * @return list of passive receiver threads
+     * @throws ThreadManagementException if any error occurs during retrieval
      */
     public List<ReceiverThreadDto> getPassiveReceiverThreads() {
         try{
@@ -110,10 +114,11 @@ public class ReceiverThreadRepository {
     }
 
     /**
-     * Deletes receiver thread with its id
-     * @param id id of receiver thread
-     * @return returns id of deleted receiver thread and if thread not found throws ThreadNotFoundException
-     * For other exceptions throws ThreadManagementException
+     * Deletes a receiver thread by its ID.
+     * @param id ID of the receiver thread to delete
+     * @return ID of the deleted thread
+     * @throws ThreadNotFoundException if thread with given ID is not found
+     * @throws ThreadManagementException for other errors during deletion
      */
     public UUID deleteReceiverThreadById(UUID id) {
         try {
@@ -131,9 +136,9 @@ public class ReceiverThreadRepository {
     }
 
     /**
-     * Deletes all receiver threads from database
-     * @return true if deletion of all receiver threads are true
-     * Throws ThreadManagementException in exception
+     * Deletes all receiver threads from the database.
+     * @return true if all threads were successfully deleted
+     * @throws ThreadManagementException if any error occurs during deletion
      */
     public Boolean deleteAllReceiverThreads() {
         try {
@@ -147,10 +152,11 @@ public class ReceiverThreadRepository {
     }
 
     /**
-     * Updates receiver thread from database with receiverthreaddto
-     * @param receiverThreadDto DTO value of receiverThread entity
-     * @return returns receiverThreadDto which is update dto in successful state if thread not found in database
-     * Throws ThreadNotFoundException for other exceptions throws ThreadManagementException
+     * Updates a receiver thread's information in the database.
+     * @param receiverThreadDto updated thread information
+     * @return updated receiver thread DTO
+     * @throws ThreadNotFoundException if thread is not found in database
+     * @throws ThreadManagementException for other errors during update
      */
     public ReceiverThreadDto updateReceiverThread(ReceiverThreadDto receiverThreadDto)
     {
@@ -185,10 +191,12 @@ public class ReceiverThreadRepository {
     }
 
     /**
-     * Updates receiver thread priority number with id and priority value
-     * @param id id of receiver thread
-     * @param priority priority value of user selection
-     * @return returns id of updated receiver thread
+     * Updates the priority of a specific receiver thread.
+     * @param id ID of the receiver thread
+     * @param priority new priority value
+     * @return ID of the updated thread
+     * @throws ThreadManagementException if priority is null
+     * @throws ThreadNotFoundException if thread is not found
      */
     public UUID updateReceiverThreadPriority(UUID id, Integer priority)
     {
@@ -218,10 +226,12 @@ public class ReceiverThreadRepository {
     }
 
     /**
-     * Updates receiver thread state value with id value and threadState value
-     * @param id id of receiver thread
-     * @param threadState thread state value for update
-     * @return returns updated receiver thread id value
+     * Updates the state of a specific receiver thread.
+     * @param id ID of the receiver thread
+     * @param threadState new thread state
+     * @return ID of the updated thread
+     * @throws ThreadManagementException if thread state is null
+     * @throws ThreadNotFoundException if thread is not found
      */
     public UUID updateReceiverThreadState(UUID id, ThreadState threadState)
     {

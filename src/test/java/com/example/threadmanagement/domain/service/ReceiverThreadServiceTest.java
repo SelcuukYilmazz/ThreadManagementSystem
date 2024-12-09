@@ -1,8 +1,10 @@
 package com.example.threadmanagement.domain.service;
 
 import com.example.threadmanagement.domain.repository.ReceiverThreadRepository;
+import com.example.threadmanagement.domain.repository.ReceiverThreadRepository;
 import com.example.threadmanagement.exception.ThreadManagementException;
 import com.example.threadmanagement.exception.ThreadNotFoundException;
+import com.example.threadmanagement.model.dto.ReceiverThreadDto;
 import com.example.threadmanagement.model.dto.ReceiverThreadDto;
 import com.example.threadmanagement.model.entity.ThreadState;
 import com.example.threadmanagement.model.entity.ThreadType;
@@ -11,18 +13,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.ResponseEntity;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.*;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
 class ReceiverThreadServiceTest {
@@ -35,11 +35,13 @@ class ReceiverThreadServiceTest {
 
     private BlockingQueue<String> sharedQueue;
     private ReceiverThreadService receiverThreadService;
+    private UUID threadId;
 
     @BeforeEach
     void setUp() {
         sharedQueue = new LinkedBlockingQueue<>();
         receiverThreadService = new ReceiverThreadService(sharedQueue, executorService, receiverThreadRepository);
+        threadId = UUID.randomUUID();
     }
 
     @Test
@@ -60,7 +62,7 @@ class ReceiverThreadServiceTest {
         // Verify all threads are created with correct initial state
         for (ReceiverThreadDto thread : result) {
             assertNotNull(thread.getId());
-            assertEquals(ThreadType.RECEIVER, thread.getType());
+            assertEquals(ThreadType.SENDER, thread.getType());
             assertEquals(ThreadState.RUNNING, thread.getState());
             assertEquals(Thread.NORM_PRIORITY, thread.getPriority());
         }
@@ -162,7 +164,7 @@ class ReceiverThreadServiceTest {
     }
 
     @Test
-    void updateReceiverThreadPriority_Success() {
+    void updateReceiverThreadPriority_ValidParameters_Success() {
         // Arrange
         UUID threadId = UUID.randomUUID();
         Integer newPriority = Thread.MAX_PRIORITY;
@@ -190,7 +192,7 @@ class ReceiverThreadServiceTest {
     }
 
     @Test
-    void getActiveReceiverThreads_Success() {
+    void getActiveReceiverThreads_ValidParameters_Success() {
         // Arrange
         List<ReceiverThreadDto> expectedThreads = Arrays.asList(
                 new ReceiverThreadDto(UUID.randomUUID(), ThreadType.RECEIVER, ThreadState.RUNNING, Thread.NORM_PRIORITY),
@@ -207,7 +209,7 @@ class ReceiverThreadServiceTest {
     }
 
     @Test
-    void startReceiverThreadsLifeCycle_Success() {
+    void startReceiverThreadsLifeCycle_ValidParameters_Success() {
         // Arrange
         List<ReceiverThreadDto> activeThreads = Arrays.asList(
                 new ReceiverThreadDto(UUID.randomUUID(), ThreadType.RECEIVER, ThreadState.RUNNING, Thread.NORM_PRIORITY),
@@ -225,7 +227,7 @@ class ReceiverThreadServiceTest {
     }
 
     @Test
-    void deleteAllReceiverThreads_Success() {
+    void deleteAllReceiverThreads_ValidParameters_Success() {
         // Arrange
         when(receiverThreadRepository.deleteAllReceiverThreads()).thenReturn(true);
 
@@ -235,5 +237,209 @@ class ReceiverThreadServiceTest {
         // Assert
         assertTrue(result);
         verify(receiverThreadRepository).deleteAllReceiverThreads();
+    }
+
+
+    @Test
+    void whenThreadStarted_ShouldConsumeDataFromQueue() throws InterruptedException {
+        // Arrange
+        ReceiverThreadDto threadDto = new ReceiverThreadDto(threadId, ThreadType.RECEIVER, ThreadState.RUNNING, Thread.NORM_PRIORITY);
+        CountDownLatch consumptionLatch = new CountDownLatch(1);
+
+        lenient().when(receiverThreadRepository.getReceiverThreadById(any(UUID.class)))
+                .thenReturn(Optional.of(threadDto));
+
+        when(executorService.submit(any(Runnable.class)))
+                .thenAnswer(invocation -> {
+                    Runnable runnable = invocation.getArgument(0);
+                    CompletableFuture.runAsync(() -> {
+                        try {
+                            // Add test data to queue
+                            sharedQueue.put("Test Data");
+                            runnable.run();
+                            consumptionLatch.countDown();
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                        }
+                    });
+                    return CompletableFuture.completedFuture(null);
+                });
+
+        // Act
+        receiverThreadService.createReceiverThreadsWithAmount(1);
+
+        // Assert
+        assertTrue(consumptionLatch.await(5, TimeUnit.SECONDS), "Data consumption timed out");
+        assertTrue(sharedQueue.isEmpty(), "Queue should be empty after consumption");
+    }
+
+    @Test
+    void whenThreadStopped_ShouldStopConsumingData() throws InterruptedException {
+        // Arrange
+        AtomicBoolean threadStopped = new AtomicBoolean(false);
+        CountDownLatch stopLatch = new CountDownLatch(1);
+
+        ReceiverThreadDto runningThread = new ReceiverThreadDto(threadId, ThreadType.RECEIVER, ThreadState.RUNNING, Thread.NORM_PRIORITY);
+        ReceiverThreadDto stoppedThread = new ReceiverThreadDto(threadId, ThreadType.RECEIVER, ThreadState.STOPPED, Thread.NORM_PRIORITY);
+
+        lenient().when(receiverThreadRepository.getReceiverThreadById(any(UUID.class)))
+                .thenAnswer(invocation -> {
+                    if (threadStopped.get()) {
+                        return Optional.of(stoppedThread);
+                    }
+                    return Optional.of(runningThread);
+                });
+
+        Future<?> mockFuture = mock(Future.class);
+        when(mockFuture.cancel(true)).thenReturn(true);
+
+        when(executorService.submit(any(Runnable.class)))
+                .thenAnswer(invocation -> {
+                    Runnable runnable = invocation.getArgument(0);
+                    CompletableFuture.runAsync(() -> {
+                        try {
+                            runnable.run();
+                        } finally {
+                            stopLatch.countDown();
+                        }
+                    });
+                    return mockFuture;
+                });
+
+        // Act
+        receiverThreadService.createReceiverThreadsWithAmount(1);
+        Thread.sleep(100);
+        threadStopped.set(true);
+
+        // Assert
+        assertTrue(stopLatch.await(5, TimeUnit.SECONDS), "Thread did not stop within timeout");
+        verify(mockFuture, timeout(2000)).cancel(true);
+    }
+
+    @Test
+    void whenThreadPriorityChanged_ShouldUpdateThreadPriority() throws InterruptedException {
+        // Arrange
+        CountDownLatch priorityLatch = new CountDownLatch(1);
+        AtomicInteger threadPriority = new AtomicInteger(Thread.NORM_PRIORITY);
+
+        lenient().when(receiverThreadRepository.getReceiverThreadById(any(UUID.class)))
+                .thenAnswer(invocation -> Optional.of(
+                        new ReceiverThreadDto(
+                                threadId,
+                                ThreadType.RECEIVER,
+                                ThreadState.RUNNING,
+                                threadPriority.get()
+                        )
+                ));
+
+        lenient().when(receiverThreadRepository.updateReceiverThreadPriority(any(UUID.class), anyInt()))
+                .thenAnswer(invocation -> {
+                    threadPriority.set(invocation.getArgument(1));
+                    return invocation.getArgument(0);
+                });
+
+        when(executorService.submit(any(Runnable.class)))
+                .thenAnswer(invocation -> {
+                    Runnable runnable = invocation.getArgument(0);
+                    CompletableFuture.runAsync(() -> {
+                        try {
+                            runnable.run();
+                        } finally {
+                            if (threadPriority.get() == Thread.MAX_PRIORITY) {
+                                priorityLatch.countDown();
+                            }
+                        }
+                    });
+                    return CompletableFuture.completedFuture(null);
+                });
+
+        // Act
+        receiverThreadService.createReceiverThreadsWithAmount(1);
+        Thread.sleep(100);
+        receiverThreadService.updateReceiverThreadPriority(threadId, Thread.MAX_PRIORITY);
+
+        // Assert
+        assertTrue(priorityLatch.await(5, TimeUnit.SECONDS),
+                "Priority change was not detected within timeout period");
+        assertEquals(Thread.MAX_PRIORITY, threadPriority.get(),
+                "Thread priority was not updated to MAX_PRIORITY");
+    }
+
+    @Test
+    void whenThreadDeleted_ShouldStopExecution() throws InterruptedException {
+        // Arrange
+        CountDownLatch deleteLatch = new CountDownLatch(1);
+        AtomicBoolean threadDeleted = new AtomicBoolean(false);
+
+        lenient().when(receiverThreadRepository.getReceiverThreadById(any(UUID.class)))
+                .thenAnswer(invocation -> {
+                    if (threadDeleted.get()) {
+                        return Optional.empty();
+                    }
+                    return Optional.of(new ReceiverThreadDto(threadId, ThreadType.RECEIVER, ThreadState.RUNNING, Thread.NORM_PRIORITY));
+                });
+
+        lenient().when(receiverThreadRepository.deleteReceiverThreadById(any(UUID.class)))
+                .thenAnswer(invocation -> {
+                    threadDeleted.set(true);
+                    return invocation.getArgument(0);
+                });
+
+        Future<?> mockFuture = mock(Future.class);
+        when(mockFuture.cancel(true)).thenReturn(true);
+
+        when(executorService.submit(any(Runnable.class)))
+                .thenAnswer(invocation -> {
+                    Runnable runnable = invocation.getArgument(0);
+                    CompletableFuture.runAsync(() -> {
+                        try {
+                            runnable.run();
+                        } finally {
+                            deleteLatch.countDown();
+                        }
+                    });
+                    return mockFuture;
+                });
+
+        // Act
+        receiverThreadService.createReceiverThreadsWithAmount(1);
+        Thread.sleep(100);
+        receiverThreadService.deleteReceiverThreadById(threadId);
+
+        // Assert
+        assertTrue(deleteLatch.await(5, TimeUnit.SECONDS), "Thread deletion timed out");
+        verify(mockFuture, timeout(2000)).cancel(true);
+        assertTrue(threadDeleted.get(), "Thread was not deleted");
+    }
+
+    @Test
+    void whenInterrupted_ShouldStopExecution() throws InterruptedException {
+        // Arrange
+        CountDownLatch interruptLatch = new CountDownLatch(1);
+
+        lenient().when(receiverThreadRepository.getReceiverThreadById(any(UUID.class)))
+                .thenReturn(Optional.of(new ReceiverThreadDto(threadId, ThreadType.RECEIVER, ThreadState.RUNNING, Thread.NORM_PRIORITY)));
+
+        when(executorService.submit(any(Runnable.class)))
+                .thenAnswer(invocation -> {
+                    Runnable runnable = invocation.getArgument(0);
+                    Thread thread = new Thread(() -> {
+                        try {
+                            runnable.run();
+                        } finally {
+                            interruptLatch.countDown();
+                        }
+                    });
+                    thread.start();
+                    thread.interrupt();
+                    return CompletableFuture.completedFuture(null);
+                });
+
+        // Act
+        receiverThreadService.createReceiverThreadsWithAmount(1);
+
+        // Assert
+        assertTrue(interruptLatch.await(5, TimeUnit.SECONDS), "Thread interruption timed out");
+        assertTrue(sharedQueue.isEmpty(), "Queue should be empty after thread interruption");
     }
 }

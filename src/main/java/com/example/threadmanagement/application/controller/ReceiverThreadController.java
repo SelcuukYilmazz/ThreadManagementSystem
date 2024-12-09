@@ -1,6 +1,6 @@
 package com.example.threadmanagement.application.controller;
 
-import com.example.threadmanagement.domain.service.ReceiverThreadService;
+import com.example.threadmanagement.domain.service.interfaces.IReceiverThreadService;
 import com.example.threadmanagement.model.dto.ReceiverThreadDto;
 import com.example.threadmanagement.model.entity.ThreadState;
 import lombok.RequiredArgsConstructor;
@@ -12,115 +12,119 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/receiverThreads") // Base URL for all endpoints in this controller
-@RequiredArgsConstructor // Automatically generates a constructor for all final fields
+@RequestMapping("/receiverThreads")
+@RequiredArgsConstructor
 public class ReceiverThreadController {
-
-    private final ReceiverThreadService receiverThreadService; // Service layer to handle receiver thread logic
+    private final IReceiverThreadService iReceiverThreadService;
 
     /**
      * Creates multiple receiver threads based on the specified amount.
-     * @param receiverAmount The number of receiver threads to create.
-     * @return A list of the created receiver thread details.
+     * @param receiverAmount number of receiver threads to create
+     * @return list of created receiver thread DTOs
+     * @throws IllegalArgumentException if receiverAmount is null
      */
     @PostMapping("/createReceiverThreadsWithAmount")
-    public List<ReceiverThreadDto> createReceiverThreadsWithAmount(
-            @RequestParam int receiverAmount // Number of threads to create, provided as a query parameter
+    public ResponseEntity<List<ReceiverThreadDto>> createReceiverThreadsWithAmount(
+            @RequestParam int receiverAmount
     ) {
-        return receiverThreadService.createReceiverThreadsWithAmount(receiverAmount);
+        return ResponseEntity.ok(iReceiverThreadService.createReceiverThreadsWithAmount(receiverAmount));
     }
 
     /**
-     * Starts the lifecycle for all active receiver threads.
-     * @return A boolean indicating whether the lifecycle was successfully started.
+     * Initiates the lifecycle for all active receiver threads in the system.
+     * @return ResponseEntity containing true if lifecycle start was successful
      */
     @GetMapping("/startReceiverThreadsLifeCycle")
-    public ResponseEntity<Boolean> startSenderThreadsLifeCycle() {
-        return ResponseEntity.ok(receiverThreadService.startReceiverThreadsLifeCycle());
+    public ResponseEntity<Boolean> startReceiverThreadsLifeCycle() {
+        return ResponseEntity.ok(iReceiverThreadService.startReceiverThreadsLifeCycle());
     }
 
     /**
-     * Retrieves a list of all active receiver threads.
-     * @return A list of active receiver threads.
+     * Retrieves all receiver threads currently in RUNNING state.
+     * @return ResponseEntity containing list of active receiver threads
      */
     @GetMapping("/getActiveReceiverThreads")
     public ResponseEntity<List<ReceiverThreadDto>> getActiveReceiverThreads() {
-        return ResponseEntity.ok(receiverThreadService.getActiveReceiverThreads());
+        return ResponseEntity.ok(iReceiverThreadService.getActiveReceiverThreads());
     }
 
     /**
-     * Retrieves a list of all receiver threads (both active and passive).
-     * @return A list of all receiver threads.
+     * Retrieves all receiver threads regardless of their state.
+     * @return ResponseEntity containing list of all receiver threads
      */
     @GetMapping("/getAllReceiverThreads")
     public ResponseEntity<List<ReceiverThreadDto>> getAllReceiverThreads() {
-        return ResponseEntity.ok(receiverThreadService.getAllReceiverThreads());
+        return ResponseEntity.ok(iReceiverThreadService.getAllReceiverThreads());
     }
 
     /**
-     * Retrieves a list of all passive receiver threads.
-     * @return A list of passive receiver threads.
+     * Retrieves all receiver threads currently in STOPPED state.
+     * @return ResponseEntity containing list of passive receiver threads
      */
     @GetMapping("/getPassiveReceiverThreads")
     public ResponseEntity<List<ReceiverThreadDto>> getPassiveReceiverThreads() {
-        return ResponseEntity.ok(receiverThreadService.getPassiveReceiverThreads());
+        return ResponseEntity.ok(iReceiverThreadService.getPassiveReceiverThreads());
     }
 
     /**
-     * Updates the details of a specific receiver thread.
-     * @param threadDto The thread details to update.
-     * @return The updated receiver thread.
+     * Updates the configuration of a specific receiver thread.
+     * @param threadDto updated thread configuration containing new state, priority, or type
+     * @return ResponseEntity containing updated receiver thread DTO
+     * @throws IllegalArgumentException if thread with specified ID doesn't exist
      */
     @PutMapping("/{threadId}/updateReceiverThread")
     public ResponseEntity<ReceiverThreadDto> updateReceiverThread(
             @ParameterObject ReceiverThreadDto threadDto) {
-        return ResponseEntity.ok(receiverThreadService.updateReceiverThread(threadDto));
+        return ResponseEntity.ok(iReceiverThreadService.updateReceiverThread(threadDto));
     }
 
     /**
      * Updates the priority of a specific receiver thread.
-     * @param id The ID of the receiver thread.
-     * @param priority The new priority to set.
-     * @return The ID of the updated thread.
+     * @param id ID of the receiver thread to update
+     * @param priority new priority value to set
+     * @return ResponseEntity containing ID of updated thread
+     * @throws IllegalArgumentException if thread not found or priority is null
      */
     @PutMapping("/{threadId}/updateReceiverThreadPriority")
     public ResponseEntity<UUID> updateReceiverThreadPriority(
-            @RequestParam UUID id, // ID of the thread to update
-            @RequestParam Integer priority // New priority level
+            @RequestParam UUID id,
+            @RequestParam Integer priority
     ) {
-        return ResponseEntity.ok(receiverThreadService.updateReceiverThreadPriority(id, priority));
+        return ResponseEntity.ok(iReceiverThreadService.updateReceiverThreadPriority(id, priority));
     }
 
     /**
      * Updates the state of a specific receiver thread.
-     * @param id The ID of the receiver thread.
-     * @param threadState The new state to set (e.g., RUNNING, STOPPED).
-     * @return The ID of the updated thread.
+     * @param id ID of the receiver thread to update
+     * @param threadState new thread state to set
+     * @return ResponseEntity containing ID of updated thread
+     * @throws IllegalArgumentException if thread not found or state is null
      */
     @PutMapping("/{threadId}/updateReceiverThreadState")
     public ResponseEntity<UUID> updateReceiverThreadState(
-            @RequestParam UUID id, // ID of the thread to update
-            @RequestParam ThreadState threadState // New state for the thread
+            @RequestParam UUID id,
+            @RequestParam ThreadState threadState
     ) {
-        return ResponseEntity.ok(receiverThreadService.updateReceiverThreadState(id, threadState));
+        return ResponseEntity.ok(iReceiverThreadService.updateReceiverThreadState(id, threadState));
     }
 
     /**
-     * Deletes a specific receiver thread by its ID.
-     * @param id The ID of the receiver thread to delete.
-     * @return The ID of the deleted thread.
+     * Deletes a receiver thread by its ID.
+     * @param id ID of the receiver thread to delete
+     * @return ResponseEntity containing ID of deleted thread
+     * @throws IllegalArgumentException if thread with specified ID doesn't exist
      */
     @DeleteMapping("/deleteReceiverThreadById")
     public ResponseEntity<UUID> deleteReceiverThreadById(@RequestParam UUID id) {
-        return ResponseEntity.ok(receiverThreadService.deleteReceiverThreadById(id));
+        return ResponseEntity.ok(iReceiverThreadService.deleteReceiverThreadById(id));
     }
 
     /**
-     * Deletes all receiver threads in the system.
-     * @return A boolean indicating whether all threads were successfully deleted.
+     * Deletes all receiver threads from the system.
+     * @return ResponseEntity containing true if all threads were successfully deleted
      */
     @DeleteMapping("/deleteAllReceiverThreads")
     public ResponseEntity<Boolean> deleteAllReceiverThreads() {
-        return ResponseEntity.ok(receiverThreadService.deleteAllReceiverThreads());
+        return ResponseEntity.ok(iReceiverThreadService.deleteAllReceiverThreads());
     }
 }

@@ -1,6 +1,5 @@
 package com.example.threadmanagement.domain.repository;
 
-
 import com.example.threadmanagement.domain.repository.interfaces.ISenderThreadRepository;
 import com.example.threadmanagement.exception.ThreadManagementException;
 import com.example.threadmanagement.exception.ThreadNotFoundException;
@@ -24,9 +23,10 @@ public class SenderThreadRepository{
     private final ISenderThreadMapper iThreadMapper;
 
     /**
-     * Creates multiple sender threads based on the provided amount.
+     * Creates multiple sender threads in the database.
      * @param senderThreadDtoList list of sender threads to be created in database
-     * @return if function is success then returns true else throws exception
+     * @return true if threads were successfully created
+     * @throws ThreadManagementException if any error occurs during creation
      */
     public Boolean createSenderThreadsWithList(List<SenderThreadDto> senderThreadDtoList)
     {
@@ -42,10 +42,10 @@ public class SenderThreadRepository{
     }
 
     /**
-     * Gets sender thread from database with id value
-     * @param id id of sender thread
-     * @return returns sender thread if found else it returns empty() for Optional if Id null returns
-     * IllegalArgumentException and else it throws ThreadManagementException
+     * Retrieves a sender thread by its ID.
+     * @param id ID of the sender thread to retrieve
+     * @return Optional containing the sender thread if found, empty otherwise
+     * @throws ThreadManagementException if ID is null or other errors occur
      */
     public Optional<SenderThreadDto> getSenderThreadById(UUID id) {
         try {
@@ -63,8 +63,9 @@ public class SenderThreadRepository{
     }
 
     /**
-     * Gets all sender threads from database
-     * @return returns list of sender threads that it found from database else it throws ThreadManagementException
+     * Retrieves all sender threads from the database.
+     * @return list of all sender threads
+     * @throws ThreadManagementException if any error occurs during retrieval
      */
     public List<SenderThreadDto> getAllSenderThreads() {
         try{
@@ -78,8 +79,9 @@ public class SenderThreadRepository{
     }
 
     /**
-     * Gets all active sender threads which thread states are running
-     * @return returns list of active sender threads and in exception throws ThreadManagementException
+     * Retrieves all active sender threads (state = RUNNING).
+     * @return list of active sender threads
+     * @throws ThreadManagementException if any error occurs during retrieval
      */
     public List<SenderThreadDto> getActiveSenderThreads() {
         try{
@@ -95,8 +97,9 @@ public class SenderThreadRepository{
     }
 
     /**
-     * Gets all passive sender threads which thread states are stopped
-     * @return returns list of passive sender threads and in exception throws ThreadManagementException
+     * Retrieves all passive sender threads (state = STOPPED).
+     * @return list of passive sender threads
+     * @throws ThreadManagementException if any error occurs during retrieval
      */
     public List<SenderThreadDto> getPassiveSenderThreads() {
         try{
@@ -112,10 +115,11 @@ public class SenderThreadRepository{
     }
 
     /**
-     * Deletes sender thread with its id
-     * @param id id of sender thread
-     * @return returns id of deleted sender thread and if thread not found throws ThreadNotFoundException
-     * For other exceptions throws ThreadManagementException
+     * Deletes a sender thread by its ID.
+     * @param id ID of the sender thread to delete
+     * @return ID of the deleted thread
+     * @throws ThreadNotFoundException if thread with given ID is not found
+     * @throws ThreadManagementException for other errors during deletion
      */
     public UUID deleteSenderThreadById(UUID id) {
         try {
@@ -129,9 +133,9 @@ public class SenderThreadRepository{
     }
 
     /**
-     * Deletes all sender threads from database
-     * @return true if deletion of all sender threads are true
-     * Throws ThreadManagementException in exception
+     * Deletes all sender threads from the database.
+     * @return true if all threads were successfully deleted
+     * @throws ThreadManagementException if any error occurs during deletion
      */
     public Boolean deleteAllSenderThreads() {
         try {
@@ -145,10 +149,11 @@ public class SenderThreadRepository{
     }
 
     /**
-     * Updates sender thread from database with senderthreaddto
-     * @param senderThreadDto DTO value of senderThread entity
-     * @return returns senderThreadDto which is update dto in successful state if thread not found in database
-     * Throws ThreadNotFoundException for other exceptions throws ThreadManagementException
+     * Updates a sender thread's information in the database.
+     * @param senderThreadDto updated thread information
+     * @return updated sender thread DTO
+     * @throws ThreadNotFoundException if thread is not found in database
+     * @throws ThreadManagementException for other errors during update
      */
     public SenderThreadDto updateSenderThread(SenderThreadDto senderThreadDto)
     {
@@ -183,10 +188,12 @@ public class SenderThreadRepository{
     }
 
     /**
-     * Updates sender thread priority number with id and priority value
-     * @param id id of sender thread
-     * @param priority priority value of user selection
-     * @return returns id of updated sender thread
+     * Updates the priority of a specific sender thread.
+     * @param id ID of the sender thread
+     * @param priority new priority value
+     * @return ID of the updated thread
+     * @throws ThreadManagementException if priority is null
+     * @throws ThreadNotFoundException if thread is not found
      */
     public UUID updateSenderThreadPriority(UUID id, Integer priority)
     {
@@ -216,10 +223,12 @@ public class SenderThreadRepository{
     }
 
     /**
-     * Updates sender thread state value with id value and threadState value
-     * @param id id of sender thread
-     * @param threadState thread state value for update
-     * @return returns updated sender thread id value
+     * Updates the state of a specific sender thread.
+     * @param id ID of the sender thread
+     * @param threadState new thread state
+     * @return ID of the updated thread
+     * @throws ThreadManagementException if thread state is null
+     * @throws ThreadNotFoundException if thread is not found
      */
     public UUID updateSenderThreadState(UUID id, ThreadState threadState)
     {

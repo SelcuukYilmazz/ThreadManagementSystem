@@ -11,8 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.ResponseEntity;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -35,11 +33,13 @@ class SenderThreadServiceTest {
 
     private BlockingQueue<String> sharedQueue;
     private SenderThreadService senderThreadService;
+    private UUID threadId;
 
     @BeforeEach
     void setUp() {
         sharedQueue = new LinkedBlockingQueue<>();
         senderThreadService = new SenderThreadService(sharedQueue, executorService, senderThreadRepository);
+        threadId = UUID.randomUUID();
     }
 
     @Test
@@ -162,7 +162,7 @@ class SenderThreadServiceTest {
     }
 
     @Test
-    void updateSenderThreadPriority_Success() {
+    void updateSenderThreadPriority_ValidParameters_Success() {
         // Arrange
         UUID threadId = UUID.randomUUID();
         Integer newPriority = Thread.MAX_PRIORITY;
@@ -190,7 +190,7 @@ class SenderThreadServiceTest {
     }
 
     @Test
-    void getActiveSenderThreads_Success() {
+    void getActiveSenderThreads_ValidParameters_Success() {
         // Arrange
         List<SenderThreadDto> expectedThreads = Arrays.asList(
                 new SenderThreadDto(UUID.randomUUID(), ThreadType.RECEIVER, ThreadState.RUNNING, Thread.NORM_PRIORITY),
@@ -207,7 +207,7 @@ class SenderThreadServiceTest {
     }
 
     @Test
-    void startSenderThreadsLifeCycle_Success() {
+    void startSenderThreadsLifeCycle_ValidParameters_Success() {
         // Arrange
         List<SenderThreadDto> activeThreads = Arrays.asList(
                 new SenderThreadDto(UUID.randomUUID(), ThreadType.RECEIVER, ThreadState.RUNNING, Thread.NORM_PRIORITY),
@@ -225,7 +225,7 @@ class SenderThreadServiceTest {
     }
 
     @Test
-    void deleteAllSenderThreads_Success() {
+    void deleteAllSenderThreads_ValidParameters_Success() {
         // Arrange
         when(senderThreadRepository.deleteAllSenderThreads()).thenReturn(true);
 
@@ -235,5 +235,68 @@ class SenderThreadServiceTest {
         // Assert
         assertTrue(result);
         verify(senderThreadRepository).deleteAllSenderThreads();
+    }
+
+    @Test
+    void createSenderThreadsWithAmount_WhenThreadStarted_ShouldAddDataToQueue() throws InterruptedException {
+        // Arrange
+        SenderThreadDto threadDto = new SenderThreadDto(threadId, ThreadType.SENDER, ThreadState.RUNNING, Thread.NORM_PRIORITY);
+        CountDownLatch messageLatch = new CountDownLatch(1);
+
+        when(senderThreadRepository.getSenderThreadById(any(UUID.class)))
+                .thenReturn(Optional.of(threadDto));
+
+        when(executorService.submit((Runnable) any()))
+                .thenAnswer(invocation -> {
+                    Runnable runnable = invocation.getArgument(0);
+                    CompletableFuture.runAsync(() -> {
+                        runnable.run();
+                        messageLatch.countDown();
+                    });
+                    return CompletableFuture.completedFuture(null);
+                });
+
+        // Act
+        senderThreadService.createSenderThreadsWithAmount(1);
+
+        // Assert
+        messageLatch.await(5, TimeUnit.SECONDS);
+        assertTrue(sharedQueue.peek() != null, "Queue should not be empty");
+        String message = sharedQueue.poll();
+        assertNotNull(message, "Message should not be null");
+        assertTrue(message.contains("Data from sender"), "Message should contain sender data");
+    }
+
+    @Test
+    void whenInterrupted_ShouldStopExecution() throws InterruptedException {
+        // Arrange
+        SenderThreadDto threadDto = new SenderThreadDto(threadId, ThreadType.SENDER, ThreadState.RUNNING, Thread.NORM_PRIORITY);
+
+        CountDownLatch interruptedLatch = new CountDownLatch(1);
+        @SuppressWarnings("unchecked")
+        Future<?> mockFuture = mock(Future.class);
+
+        when(executorService.submit((Runnable) any()))
+                .thenAnswer(invocation -> {
+                    Runnable runnable = invocation.getArgument(0);
+                    Thread thread = new Thread(() -> {
+                        try {
+                            runnable.run();
+                        } finally {
+                            interruptedLatch.countDown();
+                        }
+                    });
+                    thread.start();
+                    thread.interrupt();
+                    return mockFuture;  // Return the mock Future instead of null
+                });
+
+        // Act
+        senderThreadService.createSenderThreadsWithAmount(1);
+
+        // Assert
+        assertTrue(interruptedLatch.await(2, TimeUnit.SECONDS));
+        assertTrue(sharedQueue.isEmpty());
+        verify(mockFuture, never()).cancel(true);
     }
 }

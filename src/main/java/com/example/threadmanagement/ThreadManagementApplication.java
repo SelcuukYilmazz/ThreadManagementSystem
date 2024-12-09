@@ -9,6 +9,10 @@ import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
 import org.springframework.context.annotation.ComponentScan;
 
+/**
+ * Main Spring Boot application class for the Thread Management System.
+ * Configures and initializes the application with necessary features enabled.
+ */
 @SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
 @EnableWebMvc
 @EnableScheduling
@@ -21,7 +25,6 @@ import org.springframework.context.annotation.ComponentScan;
 )
 @ComponentScan(basePackages = "com.example.threadmanagement")
 public class ThreadManagementApplication {
-
 	public static void main(String[] args) {
 		SpringApplication.run(ThreadManagementApplication.class, args);
 	}

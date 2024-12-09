@@ -11,42 +11,49 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
 @RestController
-@RequestMapping("/messageQueue") // All endpoints in this controller will start with "/messageQueue"
-@RequiredArgsConstructor // Automatically generates a constructor for all final fields
+@RequestMapping("/messageQueue")
+@RequiredArgsConstructor
 public class MessageQueueController {
 
-    // A shared, thread-safe queue that holds messages managed across the application
+    /**
+     * Shared blocking queue that holds messages managed across the application.
+     * Thread-safe implementation for concurrent access by sender and receiver threads.
+     */
     private final BlockingQueue<String> sharedQueue;
 
     /**
-     * This endpoint retrieves messages from the shared queue in a paginated format.
-     * Clients can specify the page number and size; if not, it defaults to page 0 with 14 items.
+     * Retrieves messages from the shared queue in a paginated format.
+     * Converts the queue contents to a paginated response for easier client consumption.
+     *
+     * @param page page number to retrieve (zero-based indexing)
+     * @param size number of messages per page
+     * @return ResponseEntity containing a Page of messages
+     *         If the requested page is beyond available data, returns an empty Page
+     *         The Page includes:
+     *         - List of messages for the current page
+     *         - Total number of messages
+     *         - Current page information
      */
-    @GetMapping("/getMessageQueue") // Maps GET requests to this method with the URL "/getMessageQueue"
+    @GetMapping("/getMessageQueue")
     public ResponseEntity<Page<String>> getQueue(
-            @RequestParam(defaultValue = "0") int page, // The page number (starts from 0)
-            @RequestParam(defaultValue = "14") int size // The number of messages per page
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "14") int size
     ) {
-        // Convert the queue to a list so we can easily slice it into pages
         List<String> queueAsList = new ArrayList<>(sharedQueue);
 
-        // Calculate the start and end indices for the requested page
-        int start = page * size; // Where this page starts in the full list
-        int end = Math.min(start + size, queueAsList.size()); // Make sure we don't go beyond the list size
+        int start = page * size;
+        int end = Math.min(start + size, queueAsList.size());
 
-        // If the start index is out of bounds, return an empty page
         if (start > queueAsList.size()) {
             return ResponseEntity.ok(Page.empty());
         }
 
-        // Get the messages for the requested page (sublist)
         List<String> pageContent = queueAsList.subList(start, end);
 
-        // Wrap the sublist in a paginated response and return it
         return ResponseEntity.ok(new PageImpl<>(
-                pageContent, // The current page's messages
-                PageRequest.of(page, size), // The page and size information
-                queueAsList.size() // The total number of messages in the queue
+                pageContent,
+                PageRequest.of(page, size),
+                queueAsList.size()
         ));
     }
 }
