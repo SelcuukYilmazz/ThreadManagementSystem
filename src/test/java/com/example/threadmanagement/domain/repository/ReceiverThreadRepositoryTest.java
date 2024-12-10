@@ -39,7 +39,7 @@ class ReceiverThreadRepositoryTest {
     }
 
     @Test
-    void createReceiverThreadsWithList_Success() {
+    void createReceiverThreadsWithList_ValidParameters_Success() {
         // Arrange
         List<ReceiverThreadDto> dtoList = Arrays.asList(new ReceiverThreadDto(), new ReceiverThreadDto());
         List<ReceiverThreadEntity> entityList = Arrays.asList(new ReceiverThreadEntity(), new ReceiverThreadEntity());
@@ -56,7 +56,7 @@ class ReceiverThreadRepositoryTest {
     }
 
     @Test
-    void createReceiverThreadsWithList_ThrowsException() {
+    void createReceiverThreadsWithList_DatabaseError_ThrowsException() {
         // Arrange
         List<ReceiverThreadDto> dtoList = Arrays.asList(new ReceiverThreadDto());
         when(iReceiverThreadMapper.toEntityList(any())).thenThrow(new RuntimeException("Database error"));
@@ -67,7 +67,7 @@ class ReceiverThreadRepositoryTest {
     }
 
     @Test
-    void getReceiverThreadById_Success() {
+    void getReceiverThreadById_ValidParameters_Success() {
         // Arrange
         UUID id = UUID.randomUUID();
         ReceiverThreadEntity entity = new ReceiverThreadEntity();
@@ -84,7 +84,7 @@ class ReceiverThreadRepositoryTest {
     }
 
     @Test
-    void getReceiverThreadById_NotFound() {
+    void getReceiverThreadById_ThreadIdNotInTheDatabase_NotFound() {
         // Arrange
         UUID id = UUID.randomUUID();
         when(iReceiverThreadRepository.findById(id)).thenReturn(Optional.empty());
@@ -97,7 +97,7 @@ class ReceiverThreadRepositoryTest {
     }
 
     @Test
-    void getAllReceiverThreads_Success() {
+    void getAllReceiverThreads_Valid_Success() {
         // Arrange
         List<ReceiverThreadEntity> entities = Arrays.asList(new ReceiverThreadEntity());
         List<ReceiverThreadDto> dtos = Arrays.asList(new ReceiverThreadDto());
@@ -113,7 +113,7 @@ class ReceiverThreadRepositoryTest {
     }
 
     @Test
-    void getActiveReceiverThreads_Success() {
+    void getActiveReceiverThreads_Valid_Success() {
         // Arrange
         ReceiverThreadDto activeDto = new ReceiverThreadDto();
         activeDto.setState(ThreadState.RUNNING);
@@ -135,7 +135,7 @@ class ReceiverThreadRepositoryTest {
     }
 
     @Test
-    void deleteReceiverThreadById_Success() {
+    void deleteReceiverThreadById_ValidParameters_Success() {
         // Arrange
         UUID id = UUID.randomUUID();
         doNothing().when(iReceiverThreadRepository).deleteById(id);
@@ -149,7 +149,7 @@ class ReceiverThreadRepositoryTest {
     }
 
     @Test
-    void deleteReceiverThreadById_NotFound() {
+    void deleteReceiverThreadById_ThreadIdNotInTheDatabase_NotFound() {
         // Arrange
         UUID id = UUID.randomUUID();
         doThrow(new IllegalArgumentException()).when(iReceiverThreadRepository).deleteById(id);
@@ -160,7 +160,7 @@ class ReceiverThreadRepositoryTest {
     }
 
     @Test
-    void updateReceiverThread_Success() {
+    void updateReceiverThread_ValidParameters_Success() {
         // Arrange
         UUID id = UUID.randomUUID();
         ReceiverThreadDto dto = new ReceiverThreadDto();
@@ -181,7 +181,7 @@ class ReceiverThreadRepositoryTest {
     }
 
     @Test
-    void updateReceiverThread_NotFound() {
+    void updateReceiverThread_ThreadIdNotInTheDatabase_NotFound() {
         // Arrange
         UUID id = UUID.randomUUID();
         ReceiverThreadDto dto = new ReceiverThreadDto();
@@ -194,7 +194,7 @@ class ReceiverThreadRepositoryTest {
     }
 
     @Test
-    void updateReceiverThreadPriority_Success() {
+    void updateReceiverThreadPriority_ValidParameters_Success() {
         // Arrange
         UUID id = UUID.randomUUID();
         Integer priority = 2;
@@ -211,7 +211,7 @@ class ReceiverThreadRepositoryTest {
     }
 
     @Test
-    void updateReceiverThreadPriority_NullPriority() {
+    void updateReceiverThreadPriority_NullPriority_ThrowsException() {
         // Arrange
         UUID id = UUID.randomUUID();
 
@@ -221,7 +221,7 @@ class ReceiverThreadRepositoryTest {
     }
 
     @Test
-    void updateReceiverThreadState_Success() {
+    void updateReceiverThreadState_ValidParameters_Success() {
         // Arrange
         UUID id = UUID.randomUUID();
         ThreadState newState = ThreadState.RUNNING;
@@ -238,7 +238,7 @@ class ReceiverThreadRepositoryTest {
     }
 
     @Test
-    void updateReceiverThreadState_NullState() {
+    void updateReceiverThreadState_NullState_ThrowsException() {
         // Arrange
         UUID id = UUID.randomUUID();
 

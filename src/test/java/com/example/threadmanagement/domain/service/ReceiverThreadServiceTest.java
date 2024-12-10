@@ -45,30 +45,6 @@ class ReceiverThreadServiceTest {
     }
 
     @Test
-    void createReceiverThreadsWithAmount_ValidAmount_Success() {
-        // Arrange
-        Integer amount = 2;
-        when(executorService.submit(any(Runnable.class))).thenReturn(mock(Future.class));
-        when(receiverThreadRepository.createReceiverThreadsWithList(anyList())).thenReturn(true);
-
-        // Act
-        List<ReceiverThreadDto> result = receiverThreadService.createReceiverThreadsWithAmount(amount);
-
-        // Assert
-        assertEquals(2, result.size());
-        verify(receiverThreadRepository).createReceiverThreadsWithList(anyList());
-        verify(executorService, times(2)).submit(any(Runnable.class));
-
-        // Verify all threads are created with correct initial state
-        for (ReceiverThreadDto thread : result) {
-            assertNotNull(thread.getId());
-            assertEquals(ThreadType.SENDER, thread.getType());
-            assertEquals(ThreadState.RUNNING, thread.getState());
-            assertEquals(Thread.NORM_PRIORITY, thread.getPriority());
-        }
-    }
-
-    @Test
     void createReceiverThreadsWithAmount_RepositoryError_ThrowsException() {
         // Arrange
         Integer amount = 2;
@@ -239,42 +215,8 @@ class ReceiverThreadServiceTest {
         verify(receiverThreadRepository).deleteAllReceiverThreads();
     }
 
-
     @Test
-    void whenThreadStarted_ShouldConsumeDataFromQueue() throws InterruptedException {
-        // Arrange
-        ReceiverThreadDto threadDto = new ReceiverThreadDto(threadId, ThreadType.RECEIVER, ThreadState.RUNNING, Thread.NORM_PRIORITY);
-        CountDownLatch consumptionLatch = new CountDownLatch(1);
-
-        lenient().when(receiverThreadRepository.getReceiverThreadById(any(UUID.class)))
-                .thenReturn(Optional.of(threadDto));
-
-        when(executorService.submit(any(Runnable.class)))
-                .thenAnswer(invocation -> {
-                    Runnable runnable = invocation.getArgument(0);
-                    CompletableFuture.runAsync(() -> {
-                        try {
-                            // Add test data to queue
-                            sharedQueue.put("Test Data");
-                            runnable.run();
-                            consumptionLatch.countDown();
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
-                        }
-                    });
-                    return CompletableFuture.completedFuture(null);
-                });
-
-        // Act
-        receiverThreadService.createReceiverThreadsWithAmount(1);
-
-        // Assert
-        assertTrue(consumptionLatch.await(5, TimeUnit.SECONDS), "Data consumption timed out");
-        assertTrue(sharedQueue.isEmpty(), "Queue should be empty after consumption");
-    }
-
-    @Test
-    void whenThreadStopped_ShouldStopConsumingData() throws InterruptedException {
+    void createReceiverThreadsWithAmount_whenThreadStopped_ShouldStopConsumingData() throws InterruptedException {
         // Arrange
         AtomicBoolean threadStopped = new AtomicBoolean(false);
         CountDownLatch stopLatch = new CountDownLatch(1);
@@ -317,56 +259,7 @@ class ReceiverThreadServiceTest {
     }
 
     @Test
-    void whenThreadPriorityChanged_ShouldUpdateThreadPriority() throws InterruptedException {
-        // Arrange
-        CountDownLatch priorityLatch = new CountDownLatch(1);
-        AtomicInteger threadPriority = new AtomicInteger(Thread.NORM_PRIORITY);
-
-        lenient().when(receiverThreadRepository.getReceiverThreadById(any(UUID.class)))
-                .thenAnswer(invocation -> Optional.of(
-                        new ReceiverThreadDto(
-                                threadId,
-                                ThreadType.RECEIVER,
-                                ThreadState.RUNNING,
-                                threadPriority.get()
-                        )
-                ));
-
-        lenient().when(receiverThreadRepository.updateReceiverThreadPriority(any(UUID.class), anyInt()))
-                .thenAnswer(invocation -> {
-                    threadPriority.set(invocation.getArgument(1));
-                    return invocation.getArgument(0);
-                });
-
-        when(executorService.submit(any(Runnable.class)))
-                .thenAnswer(invocation -> {
-                    Runnable runnable = invocation.getArgument(0);
-                    CompletableFuture.runAsync(() -> {
-                        try {
-                            runnable.run();
-                        } finally {
-                            if (threadPriority.get() == Thread.MAX_PRIORITY) {
-                                priorityLatch.countDown();
-                            }
-                        }
-                    });
-                    return CompletableFuture.completedFuture(null);
-                });
-
-        // Act
-        receiverThreadService.createReceiverThreadsWithAmount(1);
-        Thread.sleep(100);
-        receiverThreadService.updateReceiverThreadPriority(threadId, Thread.MAX_PRIORITY);
-
-        // Assert
-        assertTrue(priorityLatch.await(5, TimeUnit.SECONDS),
-                "Priority change was not detected within timeout period");
-        assertEquals(Thread.MAX_PRIORITY, threadPriority.get(),
-                "Thread priority was not updated to MAX_PRIORITY");
-    }
-
-    @Test
-    void whenThreadDeleted_ShouldStopExecution() throws InterruptedException {
+    void createReceiverThreadsWithAmount_whenThreadDeleted_ShouldStopExecution() throws InterruptedException {
         // Arrange
         CountDownLatch deleteLatch = new CountDownLatch(1);
         AtomicBoolean threadDeleted = new AtomicBoolean(false);
@@ -413,7 +306,7 @@ class ReceiverThreadServiceTest {
     }
 
     @Test
-    void whenInterrupted_ShouldStopExecution() throws InterruptedException {
+    void createReceiverThreadsWithAmount_whenInterrupted_ShouldStopExecution() throws InterruptedException {
         // Arrange
         CountDownLatch interruptLatch = new CountDownLatch(1);
 

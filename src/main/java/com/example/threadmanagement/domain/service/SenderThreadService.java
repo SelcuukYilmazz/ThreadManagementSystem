@@ -182,7 +182,7 @@ public class SenderThreadService  implements ISenderThreadService {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     long currentTime = System.currentTimeMillis();
-                    if (currentTime - lastProcessTime >= 1000) {  // Check if 1 second has passed
+                    if (currentTime - lastProcessTime >= 1000) {
                         String timestamp = new java.text.SimpleDateFormat("HH:mm:ss").format(new Date());
                         String data = "Data from sender " + senderThreadId + " at " + timestamp;
                         sharedQueue.put(data);

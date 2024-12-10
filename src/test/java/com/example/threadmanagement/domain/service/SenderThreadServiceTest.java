@@ -268,7 +268,7 @@ class SenderThreadServiceTest {
     }
 
     @Test
-    void whenInterrupted_ShouldStopExecution() throws InterruptedException {
+    void createSenderThreadsWithAmount_whenInterrupted_ShouldStopExecution() throws InterruptedException {
         // Arrange
         SenderThreadDto threadDto = new SenderThreadDto(threadId, ThreadType.SENDER, ThreadState.RUNNING, Thread.NORM_PRIORITY);
 

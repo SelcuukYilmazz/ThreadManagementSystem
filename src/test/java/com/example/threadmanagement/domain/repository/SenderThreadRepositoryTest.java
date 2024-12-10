@@ -39,7 +39,7 @@ class SenderThreadRepositoryTest {
     }
 
     @Test
-    void createSenderThreadsWithList_Success() {
+    void createSenderThreadsWithList_Valid_Success() {
         // Arrange
         List<SenderThreadDto> dtoList = Arrays.asList(new SenderThreadDto(), new SenderThreadDto());
         List<SenderThreadEntity> entityList = Arrays.asList(new SenderThreadEntity(), new SenderThreadEntity());
@@ -56,7 +56,7 @@ class SenderThreadRepositoryTest {
     }
 
     @Test
-    void createSenderThreadsWithList_ThrowsException() {
+    void createSenderThreadsWithList_DatabaseError_ThrowsException() {
         // Arrange
         List<SenderThreadDto> dtoList = Arrays.asList(new SenderThreadDto());
         when(iSenderThreadMapper.toEntityList(any())).thenThrow(new RuntimeException("Database error"));
@@ -67,7 +67,7 @@ class SenderThreadRepositoryTest {
     }
 
     @Test
-    void getSenderThreadById_Success() {
+    void getSenderThreadById_ValidParameters_Success() {
         // Arrange
         UUID id = UUID.randomUUID();
         SenderThreadEntity entity = new SenderThreadEntity();
@@ -84,7 +84,7 @@ class SenderThreadRepositoryTest {
     }
 
     @Test
-    void getSenderThreadById_NotFound() {
+    void getSenderThreadById_ThreadIdNotInTheDatabase_NotFound() {
         // Arrange
         UUID id = UUID.randomUUID();
         when(iSenderThreadRepository.findById(id)).thenReturn(Optional.empty());
@@ -97,7 +97,7 @@ class SenderThreadRepositoryTest {
     }
 
     @Test
-    void getAllSenderThreads_Success() {
+    void getAllSenderThreads_Valid_Success() {
         // Arrange
         List<SenderThreadEntity> entities = Arrays.asList(new SenderThreadEntity());
         List<SenderThreadDto> dtos = Arrays.asList(new SenderThreadDto());
@@ -113,7 +113,7 @@ class SenderThreadRepositoryTest {
     }
 
     @Test
-    void getActiveSenderThreads_Success() {
+    void getActiveSenderThreads_Valid_Success() {
         // Arrange
         SenderThreadDto activeDto = new SenderThreadDto();
         activeDto.setState(ThreadState.RUNNING);
@@ -135,7 +135,7 @@ class SenderThreadRepositoryTest {
     }
 
     @Test
-    void deleteSenderThreadById_Success() {
+    void deleteSenderThreadById_ValidParameters_Success() {
         // Arrange
         UUID id = UUID.randomUUID();
         doNothing().when(iSenderThreadRepository).deleteById(id);
@@ -149,7 +149,7 @@ class SenderThreadRepositoryTest {
     }
 
     @Test
-    void deleteSenderThreadById_NotFound() {
+    void deleteSenderThreadById_ThreadIdNotInTheDatabase_NotFound() {
         // Arrange
         UUID id = UUID.randomUUID();
         doThrow(new IllegalArgumentException()).when(iSenderThreadRepository).deleteById(id);
@@ -160,7 +160,7 @@ class SenderThreadRepositoryTest {
     }
 
     @Test
-    void updateSenderThread_Success() {
+    void updateSenderThread_ValidParameters_Success() {
         // Arrange
         UUID id = UUID.randomUUID();
         SenderThreadDto dto = new SenderThreadDto();
@@ -181,7 +181,7 @@ class SenderThreadRepositoryTest {
     }
 
     @Test
-    void updateSenderThread_NotFound() {
+    void updateSenderThread_ThreadIdNotInTheDatabase_NotFound() {
         // Arrange
         UUID id = UUID.randomUUID();
         SenderThreadDto dto = new SenderThreadDto();
@@ -194,7 +194,7 @@ class SenderThreadRepositoryTest {
     }
 
     @Test
-    void updateSenderThreadPriority_Success() {
+    void updateSenderThreadPriority_ValidParameters_Success() {
         // Arrange
         UUID id = UUID.randomUUID();
         Integer priority = 2;
@@ -211,7 +211,7 @@ class SenderThreadRepositoryTest {
     }
 
     @Test
-    void updateSenderThreadPriority_NullPriority() {
+    void updateSenderThreadPriority_PriorityNull_ThrowsException() {
         // Arrange
         UUID id = UUID.randomUUID();
 
@@ -221,7 +221,7 @@ class SenderThreadRepositoryTest {
     }
 
     @Test
-    void updateSenderThreadState_Success() {
+    void updateSenderThreadState_ValidParameters_Success() {
         // Arrange
         UUID id = UUID.randomUUID();
         ThreadState newState = ThreadState.RUNNING;
@@ -238,7 +238,7 @@ class SenderThreadRepositoryTest {
     }
 
     @Test
-    void updateSenderThreadState_NullState() {
+    void updateSenderThreadState_NullState_ThrowsException() {
         // Arrange
         UUID id = UUID.randomUUID();
 

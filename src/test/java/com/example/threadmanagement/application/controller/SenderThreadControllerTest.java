@@ -32,7 +32,7 @@ class SenderThreadControllerTest {
     }
 
     @Test
-    void createSenderThreadsWithAmount_Success() {
+    void createSenderThreadsWithAmount_ValidParameters_Success() {
         // Arrange
         int senderAmount = 5;
         List<SenderThreadDto> expectedThreads = Arrays.asList(
@@ -51,7 +51,7 @@ class SenderThreadControllerTest {
     }
 
     @Test
-    void startSenderThreadsLifeCycle_Success() {
+    void startSenderThreadsLifeCycle_Valid_Success() {
         // Arrange
         when(iSenderThreadService.startSenderThreadsLifeCycle()).thenReturn(true);
 
@@ -65,7 +65,7 @@ class SenderThreadControllerTest {
     }
 
     @Test
-    void getActiveSenderThreads_Success() {
+    void getActiveSenderThreads_Valid_Success() {
         // Arrange
         List<SenderThreadDto> activeThreads = Arrays.asList(
                 new SenderThreadDto(),
@@ -83,7 +83,7 @@ class SenderThreadControllerTest {
     }
 
     @Test
-    void getAllSenderThreads_Success() {
+    void getAllSenderThreads_Valid_Success() {
         // Arrange
         List<SenderThreadDto> allThreads = Arrays.asList(
                 new SenderThreadDto(),
@@ -101,7 +101,7 @@ class SenderThreadControllerTest {
     }
 
     @Test
-    void getPassiveSenderThreads_Success() {
+    void getPassiveSenderThreads_Valid_Success() {
         // Arrange
         List<SenderThreadDto> passiveThreads = Arrays.asList(
                 new SenderThreadDto(),
@@ -119,7 +119,7 @@ class SenderThreadControllerTest {
     }
 
     @Test
-    void updateSenderThread_Success() {
+    void updateSenderThread_ValidParameters_Success() {
         // Arrange
         SenderThreadDto threadDto = new SenderThreadDto();
         when(iSenderThreadService.updateSenderThread(any(SenderThreadDto.class))).thenReturn(threadDto);
@@ -134,7 +134,7 @@ class SenderThreadControllerTest {
     }
 
     @Test
-    void updateSenderThreadPriority_Success() {
+    void updateSenderThreadPriority_ValidParameters_Success() {
         // Arrange
         UUID id = UUID.randomUUID();
         Integer priority = 5;
@@ -150,7 +150,7 @@ class SenderThreadControllerTest {
     }
 
     @Test
-    void updateSenderThreadState_Success() {
+    void updateSenderThreadState_ValidParameters_Success() {
         // Arrange
         UUID id = UUID.randomUUID();
         ThreadState threadState = ThreadState.RUNNING;
@@ -166,7 +166,7 @@ class SenderThreadControllerTest {
     }
 
     @Test
-    void deleteSenderThreadById_Success() {
+    void deleteSenderThreadById_ValidParameters_Success() {
         // Arrange
         UUID id = UUID.randomUUID();
         when(iSenderThreadService.deleteSenderThreadById(id)).thenReturn(id);
@@ -181,7 +181,7 @@ class SenderThreadControllerTest {
     }
 
     @Test
-    void deleteAllSenderThreads_Success() {
+    void deleteAllSenderThreads_Valid_Success() {
         // Arrange
         when(iSenderThreadService.deleteAllSenderThreads()).thenReturn(true);
 

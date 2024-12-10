@@ -32,7 +32,7 @@ class ReceiverThreadControllerTest {
     }
 
     @Test
-    void createReceiverThreadsWithAmount_Success() {
+    void createReceiverThreadsWithAmount_ValidParameters_Success() {
         // Arrange
         int receiverAmount = 5;
         List<ReceiverThreadDto> expectedThreads = Arrays.asList(
@@ -51,7 +51,7 @@ class ReceiverThreadControllerTest {
     }
 
     @Test
-    void startReceiverThreadsLifeCycle_Success() {
+    void startReceiverThreadsLifeCycle_Valid_Success() {
         // Arrange
         when(iReceiverThreadService.startReceiverThreadsLifeCycle()).thenReturn(true);
 
@@ -65,7 +65,7 @@ class ReceiverThreadControllerTest {
     }
 
     @Test
-    void getActiveReceiverThreads_Success() {
+    void getActiveReceiverThreads_Valid_Success() {
         // Arrange
         List<ReceiverThreadDto> activeThreads = Arrays.asList(
                 new ReceiverThreadDto(),
@@ -83,7 +83,7 @@ class ReceiverThreadControllerTest {
     }
 
     @Test
-    void getAllReceiverThreads_Success() {
+    void getAllReceiverThreads_Valid_Success() {
         // Arrange
         List<ReceiverThreadDto> allThreads = Arrays.asList(
                 new ReceiverThreadDto(),
@@ -101,7 +101,7 @@ class ReceiverThreadControllerTest {
     }
 
     @Test
-    void getPassiveReceiverThreads_Success() {
+    void getPassiveReceiverThreads_Valid_Success() {
         // Arrange
         List<ReceiverThreadDto> passiveThreads = Arrays.asList(
                 new ReceiverThreadDto(),
@@ -119,7 +119,7 @@ class ReceiverThreadControllerTest {
     }
 
     @Test
-    void updateReceiverThread_Success() {
+    void updateReceiverThread_ValidParameters_Success() {
         // Arrange
         ReceiverThreadDto threadDto = new ReceiverThreadDto();
         when(iReceiverThreadService.updateReceiverThread(any(ReceiverThreadDto.class))).thenReturn(threadDto);
@@ -134,7 +134,7 @@ class ReceiverThreadControllerTest {
     }
 
     @Test
-    void updateReceiverThreadPriority_Success() {
+    void updateReceiverThreadPriority_ValidParameters_Success() {
         // Arrange
         UUID id = UUID.randomUUID();
         Integer priority = 5;
@@ -150,7 +150,7 @@ class ReceiverThreadControllerTest {
     }
 
     @Test
-    void updateReceiverThreadState_Success() {
+    void updateReceiverThreadState_ValidParameters_Success() {
         // Arrange
         UUID id = UUID.randomUUID();
         ThreadState threadState = ThreadState.RUNNING;
@@ -166,7 +166,7 @@ class ReceiverThreadControllerTest {
     }
 
     @Test
-    void deleteReceiverThreadById_Success() {
+    void deleteReceiverThreadById_ValidParameters_Success() {
         // Arrange
         UUID id = UUID.randomUUID();
         when(iReceiverThreadService.deleteReceiverThreadById(id)).thenReturn(id);
@@ -181,7 +181,7 @@ class ReceiverThreadControllerTest {
     }
 
     @Test
-    void deleteAllReceiverThreads_Success() {
+    void deleteAllReceiverThreads_Valid_Success() {
         // Arrange
         when(iReceiverThreadService.deleteAllReceiverThreads()).thenReturn(true);
 
