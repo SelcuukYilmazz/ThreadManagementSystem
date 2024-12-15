@@ -5,6 +5,9 @@ import com.example.threadmanagement.model.dto.ReceiverThreadDto;
 import com.example.threadmanagement.model.entity.ThreadState;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 
@@ -16,6 +19,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ReceiverThreadController {
     private final IReceiverThreadService iReceiverThreadService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     /**
      * Creates multiple receiver threads based on the specified amount.
@@ -126,5 +130,11 @@ public class ReceiverThreadController {
     @DeleteMapping("/deleteAllReceiverThreads")
     public ResponseEntity<Boolean> deleteAllReceiverThreads() {
         return ResponseEntity.ok(iReceiverThreadService.deleteAllReceiverThreads());
+    }
+
+    @MessageMapping("/sendReceiverThreads")
+    @SendTo("/topic/messages")
+    public void sendReceiverThreads() {
+        messagingTemplate.convertAndSend("/topic/receiverThreads", iReceiverThreadService.getAllReceiverThreads());
     }
 }

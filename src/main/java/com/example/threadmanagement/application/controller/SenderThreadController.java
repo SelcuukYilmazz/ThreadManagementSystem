@@ -1,10 +1,14 @@
 package com.example.threadmanagement.application.controller;
 
 import com.example.threadmanagement.domain.service.interfaces.ISenderThreadService;
+import com.example.threadmanagement.model.dto.ReceiverThreadDto;
 import com.example.threadmanagement.model.dto.SenderThreadDto;
 import com.example.threadmanagement.model.entity.ThreadState;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 
@@ -16,6 +20,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class SenderThreadController {
     private final ISenderThreadService iSenderThreadService; // Service layer for managing sender threads
+    private final SimpMessagingTemplate messagingTemplate;
 
     /**
      * Creates multiple sender threads based on the specified amount.
@@ -127,5 +132,11 @@ public class SenderThreadController {
     @DeleteMapping("/deleteAllSenderThreads")
     public ResponseEntity<Boolean> deleteAllSenderThreads() {
         return ResponseEntity.ok(iSenderThreadService.deleteAllSenderThreads());
+    }
+
+    @MessageMapping("/sendSenderThreads")
+    @SendTo("/topic/messages")
+    public void sendSenderThreads() {
+        messagingTemplate.convertAndSend("/topic/senderThreads", iSenderThreadService.getAllSenderThreads());
     }
 }

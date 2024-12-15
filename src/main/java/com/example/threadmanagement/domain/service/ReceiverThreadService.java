@@ -7,6 +7,7 @@ import com.example.threadmanagement.model.entity.ThreadState;
 import com.example.threadmanagement.model.entity.ThreadType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
@@ -22,6 +23,8 @@ public class ReceiverThreadService implements IReceiverThreadService {
     private final ExecutorService executorService;
     private final ReceiverThreadRepository receiverThreadRepository;
     private final Map<UUID, Future<?>> runningReceivers = new ConcurrentHashMap<>();
+    private final SimpMessagingTemplate messagingTemplate;
+    private final MessageQueueService messageQueueService;
 
     /**
      * Creates multiple receiver threads based on the specified amount and starts their lifecycle.
@@ -49,6 +52,9 @@ public class ReceiverThreadService implements IReceiverThreadService {
             UUID threadId = receiverThreadDtoList.get(i).getId();
             runReceiverThreadLifeCycle(threadId);
         }
+
+        messagingTemplate.convertAndSend("/topic/receiverThreads", getAllReceiverThreads());
+
         return receiverThreadDtoList;
     }
 
@@ -70,6 +76,8 @@ public class ReceiverThreadService implements IReceiverThreadService {
         {
             runReceiverThreadLifeCycle(receiverThreadDto.getId());
         }
+
+        messagingTemplate.convertAndSend("/topic/receiverThreads", getAllReceiverThreads());
 
         return receiverThreadRepository.updateReceiverThread(receiverThreadDto);
     }
@@ -94,6 +102,8 @@ public class ReceiverThreadService implements IReceiverThreadService {
             runReceiverThreadLifeCycle(id);
         }
 
+        messagingTemplate.convertAndSend("/topic/receiverThreads", getAllReceiverThreads());
+
         return id;
     }
 
@@ -105,7 +115,10 @@ public class ReceiverThreadService implements IReceiverThreadService {
      */
     public UUID updateReceiverThreadPriority(UUID id, Integer priority)
     {
-        return receiverThreadRepository.updateReceiverThreadPriority(id, priority);
+        UUID updatedReceiverThreadId = receiverThreadRepository.updateReceiverThreadPriority(id, priority);
+        messagingTemplate.convertAndSend("/topic/receiverThreads", getAllReceiverThreads());
+
+        return updatedReceiverThreadId;
     }
 
     /**
@@ -139,7 +152,10 @@ public class ReceiverThreadService implements IReceiverThreadService {
      */
     public UUID deleteReceiverThreadById(UUID id)
     {
-        return receiverThreadRepository.deleteReceiverThreadById(id);
+        UUID deletedReceiverThreadId = receiverThreadRepository.deleteReceiverThreadById(id);
+        messagingTemplate.convertAndSend("/topic/receiverThreads", getAllReceiverThreads());
+
+        return deletedReceiverThreadId;
     }
 
     /**
@@ -148,7 +164,10 @@ public class ReceiverThreadService implements IReceiverThreadService {
      */
     public Boolean deleteAllReceiverThreads()
     {
-        return receiverThreadRepository.deleteAllReceiverThreads();
+        Boolean bulkDeletionResult = receiverThreadRepository.deleteAllReceiverThreads();
+        messagingTemplate.convertAndSend("/topic/receiverThreads", getAllReceiverThreads());
+
+        return bulkDeletionResult;
     }
 
     /**
@@ -162,6 +181,8 @@ public class ReceiverThreadService implements IReceiverThreadService {
         {
             runReceiverThreadLifeCycle(receiverThreadsList.get(i).getId());
         }
+        messagingTemplate.convertAndSend("/topic/receiverThreads", getAllReceiverThreads());
+
         return true;
     }
 
@@ -188,6 +209,7 @@ public class ReceiverThreadService implements IReceiverThreadService {
                     long currentTime = System.currentTimeMillis();
                     if (currentTime - lastProcessTime >= 1000) {
                         String data = sharedQueue.poll();
+                        messageQueueService.broadcastQueueUpdate();
                         if (data != null) {
                             String timestamp = new java.text.SimpleDateFormat("HH:mm:ss").format(new Date());
                             log.info("Receiver {} consumed: {} at {}", receiverThreadId, data, timestamp);

@@ -7,6 +7,7 @@ import com.example.threadmanagement.model.entity.ThreadState;
 import com.example.threadmanagement.model.entity.ThreadType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
@@ -22,6 +23,8 @@ public class SenderThreadService  implements ISenderThreadService {
     private final ExecutorService executorService;
     private final SenderThreadRepository senderThreadRepository;
     private final Map<UUID, Future<?>> runningSenders = new ConcurrentHashMap<>();
+    private final SimpMessagingTemplate messagingTemplate;
+    private final MessageQueueService messageQueueService;
 
     /**
      * Creates multiple sender threads based on the specified amount and starts their lifecycle.
@@ -49,6 +52,10 @@ public class SenderThreadService  implements ISenderThreadService {
             UUID threadId = senderThreadDtoList.get(i).getId();
             runSenderThreadLifeCycle(threadId);
         }
+
+        // This will trigger handleThreadRefresh
+        messagingTemplate.convertAndSend("/topic/senderThreads", getAllSenderThreads());
+
         return senderThreadDtoList;
     }
 
@@ -72,6 +79,8 @@ public class SenderThreadService  implements ISenderThreadService {
         {
             runSenderThreadLifeCycle(senderThreadDto.getId());
         }
+
+        messagingTemplate.convertAndSend("/topic/senderThreads", getAllSenderThreads());
 
         return result;
     }
@@ -98,6 +107,8 @@ public class SenderThreadService  implements ISenderThreadService {
             runSenderThreadLifeCycle(id);
         }
 
+        messagingTemplate.convertAndSend("/topic/senderThreads", getAllSenderThreads());
+
         return result;
     }
 
@@ -109,7 +120,9 @@ public class SenderThreadService  implements ISenderThreadService {
      */
     public UUID updateSenderThreadPriority(UUID id, Integer priority)
     {
-        return senderThreadRepository.updateSenderThreadPriority(id, priority);
+        UUID updatedSenderThreadId = senderThreadRepository.updateSenderThreadPriority(id, priority);
+        messagingTemplate.convertAndSend("/topic/senderThreads", getAllSenderThreads());
+        return updatedSenderThreadId;
     }
 
     /**
@@ -144,7 +157,10 @@ public class SenderThreadService  implements ISenderThreadService {
      */
     public UUID deleteSenderThreadById(UUID id)
     {
-        return senderThreadRepository.deleteSenderThreadById(id);
+        UUID deletedSenderThreadId = senderThreadRepository.deleteSenderThreadById(id);
+        messagingTemplate.convertAndSend("/topic/senderThreads", getAllSenderThreads());
+
+        return deletedSenderThreadId;
     }
 
     /**
@@ -153,7 +169,10 @@ public class SenderThreadService  implements ISenderThreadService {
      */
     public Boolean deleteAllSenderThreads()
     {
-        return senderThreadRepository.deleteAllSenderThreads();
+        Boolean bulkDeletionResult = senderThreadRepository.deleteAllSenderThreads();
+        messagingTemplate.convertAndSend("/topic/senderThreads", getAllSenderThreads());
+
+        return bulkDeletionResult;
     }
 
     /**
@@ -167,6 +186,8 @@ public class SenderThreadService  implements ISenderThreadService {
         {
             runSenderThreadLifeCycle(senderThreadsList.get(i).getId());
         }
+        messagingTemplate.convertAndSend("/topic/senderThreads", getAllSenderThreads());
+
         return true;
     }
 
@@ -186,6 +207,7 @@ public class SenderThreadService  implements ISenderThreadService {
                         String timestamp = new java.text.SimpleDateFormat("HH:mm:ss").format(new Date());
                         String data = "Data from sender " + senderThreadId + " at " + timestamp;
                         sharedQueue.put(data);
+                        messageQueueService.broadcastQueueUpdate();
                         log.info("Sender {} added: {}", senderThreadId, data);
                         lastProcessTime = currentTime;
                     }
