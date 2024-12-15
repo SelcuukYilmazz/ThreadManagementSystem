@@ -13,7 +13,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
         config.enableSimpleBroker("/topic");  // Enable a simple memory-based message broker
-        config.setApplicationDestinationPrefixes("/senderThreads", "/receiverThreads", "/messageQueue"); // Set prefix for messages bound for methods annotated with @MessageMapping
+        config.setApplicationDestinationPrefixes("/app"); // Set prefix for messages bound for methods annotated with @MessageMapping
     }
 
     @Override

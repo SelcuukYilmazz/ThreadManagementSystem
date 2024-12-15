@@ -209,7 +209,9 @@ public class ReceiverThreadService implements IReceiverThreadService {
                     long currentTime = System.currentTimeMillis();
                     if (currentTime - lastProcessTime >= 1000) {
                         String data = sharedQueue.poll();
-                        messageQueueService.broadcastQueueUpdate();
+
+                        messagingTemplate.convertAndSend("/topic/messageQueue", messageQueueService.getQueuePage(0,14));
+
                         if (data != null) {
                             String timestamp = new java.text.SimpleDateFormat("HH:mm:ss").format(new Date());
                             log.info("Receiver {} consumed: {} at {}", receiverThreadId, data, timestamp);

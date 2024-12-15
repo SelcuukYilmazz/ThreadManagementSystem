@@ -135,7 +135,7 @@ public class SenderThreadController {
     }
 
     @MessageMapping("/sendSenderThreads")
-    @SendTo("/topic/messages")
+    @SendTo("/topic/senderThreads")
     public void sendSenderThreads() {
         messagingTemplate.convertAndSend("/topic/senderThreads", iSenderThreadService.getAllSenderThreads());
     }

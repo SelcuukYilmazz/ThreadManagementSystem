@@ -133,7 +133,7 @@ public class ReceiverThreadController {
     }
 
     @MessageMapping("/sendReceiverThreads")
-    @SendTo("/topic/messages")
+    @SendTo("/topic/receiverThreads")
     public void sendReceiverThreads() {
         messagingTemplate.convertAndSend("/topic/receiverThreads", iReceiverThreadService.getAllReceiverThreads());
     }

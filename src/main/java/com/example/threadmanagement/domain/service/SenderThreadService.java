@@ -207,7 +207,9 @@ public class SenderThreadService  implements ISenderThreadService {
                         String timestamp = new java.text.SimpleDateFormat("HH:mm:ss").format(new Date());
                         String data = "Data from sender " + senderThreadId + " at " + timestamp;
                         sharedQueue.put(data);
-                        messageQueueService.broadcastQueueUpdate();
+
+                        messagingTemplate.convertAndSend("/topic/messageQueue", messageQueueService.getQueuePage(0,14));
+
                         log.info("Sender {} added: {}", senderThreadId, data);
                         lastProcessTime = currentTime;
                     }
