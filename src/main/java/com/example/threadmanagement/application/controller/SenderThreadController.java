@@ -133,10 +133,4 @@ public class SenderThreadController {
     public ResponseEntity<Boolean> deleteAllSenderThreads() {
         return ResponseEntity.ok(iSenderThreadService.deleteAllSenderThreads());
     }
-
-    @MessageMapping("/sendSenderThreads")
-    @SendTo("/topic/senderThreads")
-    public void sendSenderThreads() {
-        messagingTemplate.convertAndSend("/topic/senderThreads", iSenderThreadService.getAllSenderThreads());
-    }
 }

@@ -132,9 +132,5 @@ public class ReceiverThreadController {
         return ResponseEntity.ok(iReceiverThreadService.deleteAllReceiverThreads());
     }
 
-    @MessageMapping("/sendReceiverThreads")
-    @SendTo("/topic/receiverThreads")
-    public void sendReceiverThreads() {
-        messagingTemplate.convertAndSend("/topic/receiverThreads", iReceiverThreadService.getAllReceiverThreads());
-    }
+
 }
